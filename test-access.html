@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><title>Тест доступности</title></head>
+<body style="font-family:sans-serif;padding:20px">
+<h2>Тест доступности ресурсов</h2>
+<div id="results"></div>
+<script>
+const tests = [
+  {name: "Leaflet CDN (unpkg)", url: "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"},
+  {name: "Pannellum CDN (jsdelivr)", url: "https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.js"},
+  {name: "OSM Tiles", url: "https://tile.openstreetmap.org/10/622/325.png"},
+  {name: "Vercel Blob (фото)", url: "https://hhblyr0llkwibkjs.public.blob.vercel-storage.com/vg1_main-K8RRuoc6GJvOvBLon4CgWvbzfztD3v.jpg"},
+  {name: "Leaflet локальный", url: "lib/leaflet.js"},
+  {name: "Pannellum локальный", url: "lib/pannellum.js"},
+];
+
+const r = document.getElementById('results');
+tests.forEach(t => {
+  const div = document.createElement('div');
+  div.style.cssText = 'padding:8px;margin:4px 0;border-radius:4px;background:#eee';
+  div.textContent = `⏳ ${t.name}...`;
+  r.appendChild(div);
+
+  const start = Date.now();
+  fetch(t.url, {mode:'no-cors'}).then(resp => {
+    const ms = Date.now() - start;
+    div.style.background = '#d4edda';
+    div.textContent = `✅ ${t.name} — ${ms}ms`;
+  }).catch(err => {
+    const ms = Date.now() - start;
+    div.style.background = '#f8d7da';
+    div.textContent = `❌ ${t.name} — ЗАБЛОКИРОВАН (${ms}ms)`;
+  });
+});
+</script>
+</body>
+</html>

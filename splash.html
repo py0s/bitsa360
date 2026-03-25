@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Битцевский лес - Маршруты 360</title>
+  <style>
+    /* Loro Piana / Anthropic Aesthetic Typography */
+    @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Montserrat:wght@400;500;600&display=swap');
+    
+    body, html {
+      margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden;
+      /* Warm luxurious paper / cream background */
+      background: #F4F0EB;
+    }
+
+    #scene { 
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; 
+    }
+    
+    /* Vintage Paper Grain Overlay */
+    .paper-grain {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 30; pointer-events: none;
+      opacity: 0.6; mix-blend-mode: multiply;
+    }
+
+    /* UI Layout (Symmetrical Wes Anderson framing) */
+    .ui-overlay {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 20;
+      display: flex; flex-direction: column; justify-content: center; align-items: center;
+      text-align: center; pointer-events: none;
+    }
+
+    /* Elegant, quiet luxury text */
+    .agency-block {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      margin-bottom: 30px;
+    }
+    .agency-kgh {
+      font-family: 'Montserrat', sans-serif; font-size: 1.35rem; letter-spacing: 0.35em;
+      color: #A84A3B; text-transform: uppercase; font-weight: 800; margin-bottom: 8px;
+    }
+    .agency-dkr {
+      font-family: 'Montserrat', sans-serif; font-size: 1.05rem; letter-spacing: 0.25em;
+      color: #4A4640; text-transform: uppercase; font-weight: 700; margin-bottom: 8px;
+    }
+    .agency-ou {
+      font-family: 'Montserrat', sans-serif; font-size: 0.8rem; letter-spacing: 0.2em;
+      color: #7A8974; text-transform: uppercase; font-weight: 600;
+    }
+
+    .title-wrapper {
+      position: relative; display: inline-block; margin: 10px 0;
+    }
+    .title-glow {
+      position: absolute; top: 50%; left: 50%; width: 140%; height: 200%;
+      background: radial-gradient(circle, rgba(244,240,235,1) 0%, rgba(244,240,235,0.85) 40%, rgba(244,240,235,0) 70%);
+      transform: translate(-50%, -50%); z-index: -1; pointer-events: none;
+      filter: blur(15px);
+    }
+    .elegant-title {
+      font-family: 'Cormorant Garamond', serif; font-size: 6.8rem; font-weight: 700; 
+      color: #1A1816; letter-spacing: 0.06em; margin: 0; text-transform: uppercase;
+      text-shadow: 0 4px 15px rgba(244,240,235,0.9), 0px 2px 2px rgba(255,255,255,1);
+    }
+    .elegant-badge {
+      font-family: 'Montserrat', sans-serif; font-size: 0.8rem; letter-spacing: 0.4em; 
+      color: #A84A3B; text-transform: uppercase; margin-bottom: 40px; margin-top: 10px; font-weight: 600; 
+    }
+    
+    .marketing {
+      position: relative; width: 800px; height: 50px; 
+    }
+    .slogan {
+      position: absolute; width: 100%; top: 0; left: 0; pointer-events: none;
+      font-family: 'Cormorant Garamond', serif; font-size: 2.2rem; font-style: italic; 
+      color: #4A4640; opacity: 0; transform: translateY(10px); visibility: hidden; transition: all 1s ease;
+    }
+    .slogan.active { opacity: 1; transform: translateY(0); visibility: visible; transition: all 1s ease; }
+    .slogan.active { opacity: 1; transform: translateY(0); }
+    
+    /* Loader Line */
+    .loader-box { margin-top: 8vh; display: flex; flex-direction: column; align-items: center; }
+    .bar-bg { width: 300px; height: 2px; background: rgba(44,42,38,0.1); overflow: hidden; }
+    .bar-fill { width: 0%; height: 100%; background: #A84A3B; animation: prog 5s ease-in-out infinite; }
+    .status-text { font-family: 'Montserrat', sans-serif; color: #8A9A9F; font-size: 0.7rem; font-weight: 500; letter-spacing: 0.4em; margin-top: 20px; text-transform: uppercase; animation: blink 1.5s infinite; }
+
+    @keyframes prog { 0% {width:0%} 50% {width:70%} 80%{width:90%} 100%{width:100%} }
+
+    /* iPhone / Mobile */
+    @media (max-width: 768px) {
+      .agency-kgh { font-size: 0.7rem; letter-spacing: 0.2em; }
+      .agency-dkr { font-size: 0.6rem; letter-spacing: 0.15em; }
+      .agency-ou { font-size: 0.5rem; }
+      .elegant-title { font-size: 2.8rem; }
+      .elegant-badge { font-size: 0.55rem; letter-spacing: 0.25em; }
+      .marketing { width: 90vw; }
+      .slogan { font-size: 1.2rem; }
+      .bar-bg { width: 200px; }
+      .loader-box { margin-top: 4vh; }
+    }
+    @keyframes blink { 0%,100%{opacity:0.5;} 50%{opacity:1;} }
+
+    /* Cyclic Double-Poling Animation (Push back fast, glide forward slow) */
+    @keyframes double-pole {
+      0% { transform: translateY(3px); }
+      20% { transform: translateY(-12px); } /* powerful push back */
+      100% { transform: translateY(3px); } /* glide forward */
+    }
+    .pole-group { animation: double-pole 1.4s infinite cubic-bezier(0.2, 0.8, 0.2, 1); }
+  </style>
+</head>
+<body>
+
+  <!-- Physical Paper Grain Texture Filter -->
+  <svg class="paper-grain" xmlns="http://www.w3.org/2000/svg">
+    <filter id="grain">
+      <feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch"/>
+      <feColorMatrix type="matrix" values="1 0 0 0 0, 0 1 0 0 0, 0 0 1 0 0, 0 0 0 0.1 0" />
+    </filter>
+    <rect width="100%" height="100%" filter="url(#grain)"/>
+  </svg>
+
+  <svg id="scene" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice">
+    <defs>
+      <!-- Mathematical bezier curves for tracks -->
+      <path id="t1" d="M -100,200 C 400,200 600,100 900,100 S 1400,250 1700,250" />
+      <path id="t2" d="M -100,750 C 400,750 450,850 850,850 S 1300,680 1700,680" />
+      <path id="t3" d="M 200,-100 C 200,300 150,600 150,1000" />
+      <path id="t4" d="M 1450,1000 C 1450,600 1350,400 1350,-100" /> <!-- Reversed -->
+
+      <g id="skier-top">
+         <g transform="scale(0.8)">
+            <!-- Long traditional wooden skis -->
+            <line x1="-30" y1="-8" x2="33" y2="-8" stroke="#4A4640" stroke-width="3" stroke-linecap="round"/>
+            <line x1="-30" y1="8" x2="33" y2="8" stroke="#4A4640" stroke-width="3" stroke-linecap="round"/>
+            <!-- Pointed elegant ski tips pointing forward -->
+            <path d="M30,-9.5 Q45,-8 30,-6.5 Z" fill="#D7C7A3"/>
+            <path d="M30,6.5 Q45,8 30,9.5 Z" fill="#D7C7A3"/>
+            
+            <!-- Soft drop shadow for depth -->
+            <ellipse cx="2" cy="0" rx="14" ry="11" fill="rgba(0,0,0,0.15)" />
+
+            <!-- Dynamic Poles & Sliding Arms Group -->
+            <g>
+              <animateTransform attributeName="transform" type="translate" values="12,0; -12,0; 12,0" 
+                                keyTimes="0; 0.25; 1" dur="1.2s" repeatCount="indefinite" calcMode="spline" 
+                                keySplines="0.25 0.1 0.25 1; 0.42 0 1 1"/>
+              <!-- Sliding Arms (Terracotta Red) -->
+              <ellipse cx="2" cy="-9" rx="8" ry="4" fill="#8B3B2E" transform="rotate(-15, 2, -9)"/>
+              <ellipse cx="2" cy="9" rx="8" ry="4" fill="#8B3B2E" transform="rotate(15, 2, 9)"/>
+              
+              <!-- Left Pole (Handle near arms, extending massively back) -->
+              <line x1="8" y1="-14" x2="-35" y2="-14" stroke="#4A4640" stroke-width="1.5" stroke-linecap="round"/>
+              <circle cx="-35" cy="-14" r="2.5" fill="#C57E65"/> <!-- Decorative Basket -->
+              
+              <!-- Right Pole -->
+              <line x1="8" y1="14" x2="-35" y2="14" stroke="#4A4640" stroke-width="1.5" stroke-linecap="round"/>
+              <circle cx="-35" cy="14" r="2.5" fill="#C57E65"/>
+            </g>
+            
+            <!-- Torso (Shoulders & Winter Jacket) -->
+            <path d="M-8,-7 L6,-7 C12,-7 15,-4 15,0 C15,4 12,7 6,7 L-8,7 C-14,7 -14,-7 -8,-7 Z" fill="#A84A3B" />
+            
+            <!-- Flowing Cashmere Scarf (Dynamic trailing feel) -->
+            <path d="M-5,4 Q-25,12 -30,6 Q-12,2 -4,0 Z" fill="#D7C7A3" opacity="0.95"/>
+            
+            <!-- Beanie Hat with highlighting -->
+            <circle cx="2" cy="0" r="5.5" fill="#E0D7CD" /> 
+            <path d="M2,-5.5 A5.5,5.5 0 0,1 7.5,0 A5.5,5.5 0 0,1 2,5.5 Z" fill="#8B3B2E" />
+            <circle cx="5" cy="0" r="2.5" fill="#6D7C68" /> <!-- Tiny pop of muted green -->
+         </g>
+      </g>
+    </defs>
+
+    <!-- Base Tracks Layer -->
+    <g id="tracks-layer" stroke="#E6DFD3" stroke-width="10" stroke-linecap="round" fill="none">
+      <use href="#t1" />
+      <use href="#t2" />
+      <use href="#t3" />
+      <use href="#t4" />
+      <!-- Tiny inner core to the snow tracks -->
+      <g stroke="#ffffff" stroke-width="2" stroke-dasharray="8,8" opacity="0.6">
+         <use href="#t1" />
+         <use href="#t2" />
+         <use href="#t3" />
+         <use href="#t4" />
+      </g>
+    </g>
+
+    <!-- Geometrical Winding Forest Layer Generated by JS -->
+    <g id="forest-layer"></g>
+
+    <!-- Skiers Gliding Infinitely Layer Generated by JS -->
+    <g id="skiers-layer"></g>
+  </svg>
+
+  <div class="ui-overlay">
+    <div class="agency-block">
+       <div class="agency-kgh">Комплекс Городского Хозяйства</div>
+       <div class="agency-dkr">Департамент Капитального Ремонта</div>
+       <div class="agency-ou">Оперативное Управление</div>
+    </div>
+    
+    <div class="title-wrapper">
+       <div class="title-glow"></div>
+       <div class="elegant-title">БИТЦЕВСКИЙ ЛЕС</div>
+    </div>
+    
+    <div class="elegant-badge" style="margin-top: 20px;">Новый способ презентации проекта</div>
+    
+    <div class="marketing">
+      <div class="slogan active">Самая длинная оснежëнная трасса для беговых лыж в мире</div>
+      <div class="slogan">Локальные лыжные трассы в густонаселенных районах</div>
+      <div class="slogan">Глобальный проект, меняющий городскую природу</div>
+      <div class="slogan">Полное погружение в атмосферу зимнего леса</div>
+    </div>
+
+    <div class="loader-box">
+      <div class="bar-bg"><div class="bar-fill"></div></div>
+      <div class="status-text">Инициализация данных...</div>
+    </div>
+  </div>
+
+  <script>
+    // Text slogan cyclical fader
+    const slogans = document.querySelectorAll('.slogan');
+    let slIdx = 0;
+    setInterval(() => {
+      slogans[slIdx].classList.remove('active');
+      slIdx = (slIdx + 1) % slogans.length;
+      slogans[slIdx].classList.add('active');
+    }, 3500);
+
+    // 1. GENERATE THE WES ANDERSON FOREST AVOIDING TRACKS
+    const svgForest = document.getElementById('forest-layer');
+    const colors = ["#8A9A9F", "#C57E65", "#D5B97D", "#E0D7CD", "#6D7C68", "#9B8B79"];
+    let htmlForest = "";
+    
+    // Sample track points for hit testing
+    const allTracks = ['t1','t2','t3','t4'].map(id => document.getElementById(id));
+    const trackPts = [];
+    allTracks.forEach(tr => {
+        let l = tr.getTotalLength();
+        for(let i=0; i<l; i+=25) { trackPts.push(tr.getPointAtLength(i)); }
+    });
+
+    function isTrackClear(x, y) {
+        // Leave central gap for UI
+        if(x > 350 && x < 1250 && y > 150 && y < 750) return false; 
+        // Ensure no tree grows directly over lines
+        for(let p of trackPts) {
+           if (Math.hypot(p.x - x, p.y - y) < 40) return false;
+        }
+        return true;
+    }
+
+    const grids = [
+      {x: 600, y: 100, cols: 5, rows: 3, clr: 0},
+      {x: 1000, y: 800, cols: 6, rows: 2, clr: 4},
+      {x: 100, y: 450, cols: 3, rows: 6, clr: 2},
+      {x: 1500, y: 450, cols: 3, rows: 6, clr: 1},
+      {x: 900, y: -20, cols: 8, rows: 3, clr: 3},
+      {x: 600, y: 920, cols: 8, rows: 2, clr: 5},
+      {x: 1300, y: 150, cols: 4, rows: 3, clr: 4},
+      {x: 300, y: 800, cols: 5, rows: 3, clr: 0}
+    ];
+    
+    grids.forEach(g => {
+      for(let r=0; r<g.rows; r++) {
+        for(let c=0; c<g.cols; c++) {
+          let spacing = 38;
+          let px = g.x + (c - g.cols/2) * spacing;
+          let py = g.y + (r - g.rows/2) * spacing;
+          px += (Math.random()-0.5)*15; py += (Math.random()-0.5)*15;
+          
+          if (!isTrackClear(px, py)) continue;
+
+          let clr = colors[(g.clr + r + c) % colors.length];
+          let rBase = 16 + Math.random()*5;
+          htmlForest += `<g transform="translate(${px}, ${py})">
+            <circle cx="2" cy="3" r="${rBase}" fill="rgba(0,0,0,0.04)" />
+            <circle cx="0" cy="0" r="${rBase}" fill="${clr}" />
+            <circle cx="-3" cy="-3" r="${rBase*0.8}" fill="rgba(255,255,255,0.18)" />
+            <circle cx="2" cy="2" r="${rBase*0.6}" fill="rgba(0,0,0,0.06)" />
+            <circle cx="-1" cy="-1" r="${rBase*0.25}" fill="rgba(255,255,255,0.4)" />
+          </g>`;
+        }
+      }
+    });
+
+    for(let i=0; i<150; i++) {
+      let px = Math.random()*1600; let py = Math.random()*900;
+      if (!isTrackClear(px, py)) continue;
+      
+      let clr = colors[Math.floor(Math.random()*colors.length)];
+      let rBase = 22 + Math.random()*12; 
+      htmlForest += `<g transform="translate(${px}, ${py})">
+        <circle cx="3" cy="4" r="${rBase}" fill="rgba(0,0,0,0.05)" />
+        <circle cx="0" cy="0" r="${rBase}" fill="${clr}" />
+        <circle cx="-4" cy="-4" r="${rBase*0.75}" fill="rgba(255,255,255,0.2)" />
+        <circle cx="0" cy="0" r="${rBase*0.15}" fill="rgba(255,255,255,0.3)" />
+      </g>`;
+    }
+    svgForest.innerHTML = htmlForest;
+
+    // 2. ORCHESTRATE ORGANIC TRAFFIC & COLLISION AVOIDANCE
+    const svgSkiers = document.getElementById('skiers-layer');
+    const allSkiers = [];
+    const SPEED = 75; // constant px/sec
+    
+    const config = [
+      { track: 't1', count: 7, scale: 0.8 },
+      { track: 't2', count: 8, scale: 0.85 },
+      { track: 't3', count: 5, scale: 0.75 },
+      { track: 't4', count: 5, scale: 0.8 }
+    ];
+
+    const trackCache = {};
+    config.forEach(c => {
+       const g = document.getElementById(c.track);
+       trackCache[c.track] = { el: g, len: g.getTotalLength() };
+    });
+
+    config.forEach(tr => {
+       let len = trackCache[tr.track].len;
+       let spacing = len / tr.count;
+       for(let i=0; i<tr.count; i++) {
+          let dom = document.createElementNS("http://www.w3.org/2000/svg", "g");
+          dom.innerHTML = `<use href="#skier-top" transform="scale(${tr.scale})"/>`;
+          svgSkiers.appendChild(dom);
+          
+          allSkiers.push({
+             track: tr.track,
+             dist: i * spacing,
+             dom: dom,
+             speed: SPEED,
+             prio: Math.random(), // randomly assigned right-of-way
+             x: 0, y: 0
+          });
+       }
+    });
+
+    let lastT = performance.now();
+    function tick(now) {
+       let dt = (now - lastT) / 1000;
+       lastT = now;
+       if(dt > 0.05) dt = 0.05; // clamp jumps
+
+       // Predict collisions and yield (Look-ahead Traffic Control)
+       allSkiers.forEach(s1 => {
+          s1.speed = SPEED; // Try to drive max uniform speed
+          let tData = trackCache[s1.track];
+          
+          // Look ahead exactly 30px
+          let distAhead = s1.dist + 30;
+          if (distAhead > tData.len) distAhead -= tData.len;
+          let pAhead = tData.el.getPointAtLength(distAhead);
+
+          let yieldToNetwork = false;
+          
+          allSkiers.forEach(s2 => {
+             if (s1 === s2) return;
+             // Is anyone near my future intersection point?
+             let dx = pAhead.x - s2.x; let dy = pAhead.y - s2.y;
+             if (dx*dx + dy*dy < 1200) { // 35px collision bubble
+                 if (s1.track === s2.track) {
+                     // Don't rear-end someone
+                     let deltaDist = s2.dist - s1.dist;
+                     if (deltaDist < 0) deltaDist += tData.len;
+                     if (deltaDist > 0 && deltaDist < 80) yieldToNetwork = true;
+                 } else {
+                     // Distinct tracks crossing: Yield based strictly on right-of-way (priority)
+                     if (s1.prio < s2.prio) yieldToNetwork = true;
+                 }
+             }
+          });
+          
+          if (yieldToNetwork) s1.speed = 0; // stop and politely wait for s2 to cross!
+       });
+
+       // Move anatomically
+       allSkiers.forEach(s => {
+          let tData = trackCache[s.track];
+          s.dist += s.speed * dt;
+          if (s.dist >= tData.len) s.dist -= tData.len;
+          
+          let p = tData.el.getPointAtLength(s.dist);
+          // Small precise sample ahead for tangent orientation
+          let pNext = tData.el.getPointAtLength(Math.min(s.dist + 1, tData.len)); 
+          let angle = Math.atan2(pNext.y - p.y, pNext.x - p.x) * 180 / Math.PI;
+          
+          s.x = p.x; s.y = p.y;
+          s.dom.setAttribute('transform', `translate(${p.x}, ${p.y}) rotate(${angle})`);
+       });
+
+       requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+
+  </script>
+</body>
+</html>

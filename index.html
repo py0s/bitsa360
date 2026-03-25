@@ -1,0 +1,3627 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Битцевский лес — Входные группы 360°</title>
+<link rel="stylesheet" href="lib/leaflet.css" />
+<link rel="stylesheet" href="lib/pannellum.css" />
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+/* Zone buttons — Loro Piana palette */
+.zone-btn {
+  padding: 10px 20px; border-radius: 8px; font-weight: 300; font-size: 14px;
+  cursor: pointer; transition: all 0.3s ease; letter-spacing: 0.5px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.1); backdrop-filter: blur(8px);
+  background: rgba(255,255,255,0.92);
+}
+.zone-btn[data-zone="1"] { border: 2px solid #C5A55A; color: #8B7332; }
+.zone-btn[data-zone="1"]:hover, .zone-btn[data-zone="1"].active { background: linear-gradient(135deg, #C5A55A, #D4B96A); color: #fff; border-color: #C5A55A; }
+.zone-btn[data-zone="2"] { border: 2px solid #A8A9AD; color: #6B6C70; }
+.zone-btn[data-zone="2"]:hover, .zone-btn[data-zone="2"].active { background: linear-gradient(135deg, #A8A9AD, #BFC0C4); color: #fff; border-color: #A8A9AD; }
+.zone-btn[data-zone="3"] { border: 2px solid #B08D57; color: #7A6234; }
+.zone-btn[data-zone="3"]:hover, .zone-btn[data-zone="3"].active { background: linear-gradient(135deg, #B08D57, #C4A26B); color: #fff; border-color: #B08D57; }
+.zone-btn-back { padding: 10px 20px; border: 2px solid #555; border-radius: 8px; background: rgba(255,255,255,0.92); color: #555; font-weight: 300; font-size: 13px; cursor: pointer; transition: all 0.3s; box-shadow: 0 2px 12px rgba(0,0,0,0.1); display: none; }
+.zone-btn-back:hover { background: #555; color: #fff; }
+
+@keyframes zoneSlideUp {
+  from { transform: translateY(40px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+@keyframes zoneFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Zone tooltip on map */
+.zone-tooltip {
+  background: rgba(255,255,255,0.94) !important; border: none !important;
+  box-shadow: 0 6px 30px rgba(0,0,0,0.15) !important; border-radius: 12px !important;
+  padding: 16px 20px !important; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  backdrop-filter: blur(10px); max-width: 200px !important; min-width: 120px !important; white-space: normal !important; word-wrap: break-word !important;
+}
+.zone-tooltip .zone-tt-title { font-size: 16px; font-weight: 800; letter-spacing: 0.5px; margin-bottom: 2px; color: #1a1a1a; }
+.zone-tooltip .zone-tt-budget { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; color: #1a1a1a; }
+.zone-tooltip .zone-tt-label { font-size: 9px; text-transform: uppercase; letter-spacing: 2px; opacity: 0.6; margin-top: 1px; color: #333; }
+.zone-tooltip::before { display: none !important; }
+
+/* McKinsey-style zone card — Loro Piana */
+.zone-header { padding: 36px 40px 28px; color: #fff; position: relative; }
+.zone-header h2 { font-size: 32px; font-weight: 300; letter-spacing: -0.5px; margin-bottom: 2px; }
+.zone-header h3 { font-size: 14px; font-weight: 300; opacity: 0.75; letter-spacing: 0.5px; }
+.zone-header .zone-budget { font-size: 42px; font-weight: 700; margin-top: 20px; letter-spacing: -1.5px; }
+.zone-header .zone-budget-label { font-size: 10px; text-transform: uppercase; letter-spacing: 3px; opacity: 0.5; margin-top: 4px; }
+
+.zone-body { padding: 32px 40px 40px; }
+.zone-section-title { font-size: 10px; text-transform: uppercase; letter-spacing: 3px; color: #999; font-weight: 600; margin: 28px 0 14px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
+.zone-section-title:first-child { margin-top: 0; }
+
+.zone-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.zone-stat { border-radius: 12px; padding: 18px 14px; text-align: center; transition: all 0.25s; }
+.zone-stat:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,0.06); }
+.zone-stat-icon { font-size: 30px; margin-bottom: 8px; }
+.zone-stat-value { font-size: 24px; font-weight: 700; line-height: 1.1; }
+.zone-stat-label { font-size: 10px; color: #999; margin-top: 6px; line-height: 1.3; letter-spacing: 0.3px; }
+
+.zone-trails { display: flex; flex-direction: column; gap: 8px; }
+.zone-trail-row { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 10px; }
+.zone-trail-color { width: 36px; height: 5px; border-radius: 3px; flex-shrink: 0; }
+.zone-trail-name { font-size: 13px; font-weight: 500; color: #444; flex: 1; letter-spacing: 0.2px; }
+.zone-trail-value { font-size: 14px; font-weight: 700; }
+
+.zone-close { position: absolute; top: 18px; right: 22px; width: 38px; height: 38px; border-radius: 50%; border: none; background: rgba(255,255,255,0.15); color: #fff; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+.zone-close:hover { background: rgba(255,255,255,0.35); transform: scale(1.1); }
+
+.zone-footer { padding: 0 40px 28px; text-align: center; font-size: 10px; color: #bbb; letter-spacing: 1px; text-transform: uppercase; }
+
+.toast-msg {
+  position: fixed;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10001;
+  background: rgba(45,90,39,0.9);
+  color: #fff;
+  padding: 10px 24px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+  transition: opacity 0.5s;
+}
+
+:root {
+  --primary: #2d5a27;
+  --accent: #e8a838;
+  --text: #1a1a1a;
+  --sidebar-w: 360px;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: var(--text);
+  height: 100vh;
+  overflow: hidden;
+}
+
+.app { display: flex; height: 100vh; }
+
+.layer-switcher { margin-top: 10px; }
+.layer-switcher-btn {
+  width: 70px; height: 70px; border-radius: 8px; overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3); cursor: pointer;
+  border: 2px solid #fff; background: #fff;
+}
+.layer-thumb { position: relative; width: 100%; height: 100%; }
+.layer-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.layer-thumb span {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  background: rgba(0,0,0,0.6); color: #fff;
+  font-size: 10px; font-weight: 600; text-align: center;
+  padding: 2px 0;
+}
+
+.sidebar {
+  width: var(--sidebar-w);
+  background: #fff;
+  border-right: 1px solid #ddd;
+  display: flex;
+  flex-direction: column;
+  z-index: 1000;
+  overflow: hidden;
+}
+
+.sidebar-header {
+  padding: 20px;
+  background: var(--primary);
+  color: white;
+}
+
+.sidebar-header h1 {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.sidebar-header p { font-size: 12px; opacity: 0.8; }
+
+.sidebar-tabs {
+  display: flex; overflow-x: auto; border-bottom: 2px solid #eee;
+  padding: 0 8px; gap: 2px; scrollbar-width: none;
+}
+.sidebar-tabs::-webkit-scrollbar { display: none; }
+.sidebar-tab {
+  display: flex; align-items: center; gap: 4px; padding: 8px 12px;
+  font-size: 12px; font-weight: 600; color: #888; cursor: pointer;
+  border-bottom: 2px solid transparent; margin-bottom: -2px;
+  white-space: nowrap; transition: all 0.2s; flex-shrink: 0;
+}
+.sidebar-tab:hover { color: #333; background: #f5f5f5; }
+.sidebar-tab.active { color: #2d5a27; border-bottom-color: #2d5a27; }
+.sidebar-tab .tab-close {
+  width: 16px; height: 16px; border-radius: 50%; border: none;
+  background: transparent; color: #aaa; font-size: 12px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; padding: 0;
+  transition: all 0.15s;
+}
+.sidebar-tab .tab-close:hover { background: #e74c3c; color: #fff; }
+
+.sidebar-filters {
+  padding: 12px 16px;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.filter-chip {
+  padding: 4px 10px;
+  border-radius: 12px;
+  border: 1px solid #ddd;
+  background: white;
+  font-size: 11px;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s, color 0.2s;
+}
+
+.filter-chip:hover { border-color: var(--primary); }
+.filter-chip.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+.sidebar-list { flex: 1; overflow-y: auto; padding: 8px; }
+
+.entry-card {
+  padding: 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+  margin-bottom: 4px;
+  border: 1px solid transparent;
+}
+
+.entry-card:hover { background: #f0f7ef; border-color: #4a8c3f; }
+.entry-card.active { background: #e8f5e3; border-color: var(--primary); }
+
+.entry-card-header { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+
+.entry-number {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: var(--primary); color: white;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; flex-shrink: 0;
+}
+
+.entry-name { font-size: 13px; font-weight: 600; }
+.entry-desc { font-size: 11px; color: #666; margin-left: 38px; }
+
+.entry-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-left: 38px; margin-top: 6px; }
+.entry-tag { font-size: 10px; padding: 2px 6px; background: #f0f0f0; border-radius: 4px; color: #666; }
+
+.entry-status { display: flex; gap: 6px; margin-left: 38px; margin-top: 4px; }
+.status-dot { width: 8px; height: 8px; border-radius: 50%; background: #ddd; }
+.status-dot.has-photo { background: #4caf50; }
+.status-dot.has-render { background: var(--accent); }
+
+.map-container { flex: 1; }
+#map { height: 100%; }
+
+.marker-icon {
+  background: var(--primary); color: white; border-radius: 50%;
+  width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 700; border: 2px solid white;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+}
+.marker-icon.has-photo { background: #4caf50; }
+.marker-icon.has-infra { background: var(--accent); color: var(--text); }
+.marker-icon.proposed { background: #e53935; border: 2px dashed white; }
+.marker-icon.infra-point { background: #1e88e5; font-size: 16px; }
+.viewpoint-icon {
+  width: 14px; height: 14px; border-radius: 50%;
+  background: rgba(255, 152, 0, 0.9); border: 2px solid white;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.4); cursor: pointer;
+}
+
+/* Edit mode */
+.edit-toggle {
+  position: absolute; top: 80px; right: 12px; z-index: 900;
+  background: white; border: 2px solid #ccc; border-radius: 8px;
+  padding: 8px 14px; cursor: pointer; font-size: 13px; font-weight: 600;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2); transition: all 0.2s;
+}
+.edit-toggle:hover { border-color: var(--primary); }
+.edit-toggle.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+.edit-banner {
+  position: absolute; top: 12px; left: 50%; transform: translateX(-50%); z-index: 900;
+  background: #e53935; color: white; padding: 6px 20px; border-radius: 20px;
+  font-size: 13px; font-weight: 600; display: none;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3); pointer-events: none;
+}
+.edit-banner.visible { display: block; }
+
+.edit-form-popup {
+  position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  background: white; border-radius: 12px; padding: 24px; z-index: 2100;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3); width: 340px; display: none;
+}
+.edit-form-popup.open { display: block; }
+.edit-form-popup h3 { margin-bottom: 16px; font-size: 16px; }
+.edit-form-popup label { display: block; font-size: 12px; color: #666; margin-bottom: 4px; margin-top: 12px; }
+.edit-form-popup input, .edit-form-popup select, .edit-form-popup textarea {
+  width: 100%; padding: 8px 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px;
+}
+.edit-form-popup textarea { resize: vertical; height: 60px; }
+.edit-form-popup .coords { font-size: 11px; color: #999; margin-top: 4px; }
+.edit-form-btns { display: flex; gap: 8px; margin-top: 16px; }
+.edit-form-btns button {
+  flex: 1; padding: 8px; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600;
+}
+.btn-save { background: var(--primary); color: white; }
+.btn-cancel { background: #eee; color: #333; }
+.btn-delete { background: #e53935; color: white; }
+
+.edit-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.3); z-index: 2050; display: none; }
+.edit-overlay.open { display: block; }
+
+.export-bar {
+  position: absolute; bottom: 30px; right: 12px; z-index: 1001;
+  display: none; gap: 8px;
+}
+.export-bar.visible { display: flex; }
+.export-bar button {
+  background: white; border: 2px solid #ccc; border-radius: 8px;
+  padding: 8px 14px; cursor: pointer; font-size: 12px; font-weight: 600;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+.export-bar button:hover { border-color: var(--primary); }
+
+/* Modal */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 2000; display: none; flex-direction: column; }
+.modal-overlay.open { display: flex; }
+
+.modal-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 24px; background: rgba(0,0,0,0.5); color: white; }
+.modal-header h2 { font-size: 18px; font-weight: 600; }
+
+.modal-close { background: none; border: none; color: white; font-size: 28px; cursor: pointer; padding: 4px 8px; border-radius: 4px; }
+.modal-close:hover { background: rgba(255,255,255,0.1); }
+
+.modal-tabs { display: flex; padding: 0 24px; background: rgba(0,0,0,0.3); }
+.modal-tab { padding: 10px 20px; color: rgba(255,255,255,0.6); cursor: pointer; border-bottom: 2px solid transparent; font-size: 14px; }
+.modal-tab:hover { color: white; }
+.modal-tab.active { color: white; border-bottom-color: var(--accent); }
+
+.modal-body { flex: 1; overflow: hidden; position: relative; }
+
+/* Tabs content — shared hide/show */
+.viewer-360, .compare-container, .gallery-container { width: 100%; height: 100%; display: none; }
+.viewer-360.active, .compare-container.active, .gallery-container.active { display: block; }
+
+/* Shared placeholder style */
+.placeholder-360, .compare-placeholder, .gallery-placeholder {
+  width: 100%; height: 100%; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; color: rgba(255,255,255,0.5); gap: 16px;
+}
+.placeholder-360 svg { width: 80px; height: 80px; opacity: 0.3; }
+
+/* Before/After slider */
+.compare-container { position: relative; overflow: hidden; user-select: none; }
+.compare-before, .compare-after { position: absolute; inset: 0; }
+.compare-before { z-index: 1; }
+.compare-after { z-index: 2; clip-path: inset(0 0 0 50%); }
+.compare-before img, .compare-after img { width: 100%; height: 100%; object-fit: contain; }
+
+.compare-slider {
+  position: absolute; top: 0; bottom: 0; left: 50%; width: 4px;
+  background: white; z-index: 3; cursor: ew-resize;
+}
+.compare-slider::after {
+  content: '\27E8\27E9'; position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%, -50%); width: 40px; height: 40px; border-radius: 50%;
+  background: white; display: flex; align-items: center; justify-content: center;
+  font-size: 16px; color: var(--text); box-shadow: 0 2px 8px rgba(0,0,0,0.3); letter-spacing: -4px;
+}
+
+.compare-label { position: absolute; top: 16px; padding: 6px 14px; background: rgba(0,0,0,0.6); color: white; border-radius: 4px; font-size: 13px; z-index: 4; }
+.compare-label.before { left: 16px; }
+.compare-label.after { right: 16px; }
+
+/* Gallery */
+.gallery-container { overflow-y: auto; padding: 24px; }
+.gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+.gallery-card { background: rgba(255,255,255,0.08); border-radius: 12px; overflow: hidden; cursor: pointer; transition: transform 0.2s; }
+.gallery-card:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
+.gallery-card img { width: 100%; aspect-ratio: 16/9; object-fit: cover; }
+.gallery-card-info { padding: 12px; color: white; }
+.gallery-card-info h4 { font-size: 14px; margin-bottom: 4px; }
+.gallery-card-info p { font-size: 12px; color: rgba(255,255,255,0.6); }
+
+/* Info panel in modal */
+.modal-info { position: absolute; bottom: 0; left: 0; right: 0; padding: 16px 24px; background: linear-gradient(transparent, rgba(0,0,0,0.8)); color: white; z-index: 10; display: none; }
+.modal-info.active { display: block; }
+.info-tags { display: flex; gap: 8px; margin-top: 8px; }
+.info-tag { padding: 4px 10px; background: rgba(255,255,255,0.15); border-radius: 4px; font-size: 12px; }
+
+/* Loading spinner */
+.loading-overlay {
+  position: absolute; inset: 0; z-index: 5;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  background: rgba(0,0,0,0.85); color: white; gap: 16px;
+}
+.spinner {
+  width: 48px; height: 48px; border: 4px solid rgba(255,255,255,0.2);
+  border-top-color: var(--accent); border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-text { font-size: 14px; opacity: 0.7; }
+.loading-progress { font-size: 12px; opacity: 0.5; }
+
+/* Popup thumbnail */
+.popup-thumb {
+  width: 100%; max-width: 180px; max-height: 100px; object-fit: cover;
+  border-radius: 6px; margin-top: 6px; cursor: pointer; transition: opacity 0.2s;
+}
+.popup-thumb:hover { opacity: 0.85; }
+.draw-tooltip { font-size: 10px !important; padding: 1px 4px !important; background: #1a5276 !important; color: #fff !important; border: none !important; }
+
+/* Legend panel */
+/* Ski trails panel */
+.ski-btn {
+  position: absolute; top: 210px; right: 10px; z-index: 800;
+  background: #c0392b; color: #fff; border: none; padding: 8px 14px;
+  border-radius: 8px; font-size: 13px; cursor: pointer; font-weight: 600;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+.ski-btn:hover { background: #a93226; }
+.ski-btn.active { background: #e74c3c; }
+.ski-panel {
+  display: none; position: absolute; top: 250px; right: 10px; z-index: 800;
+  background: #fff; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+  width: 300px; max-height: 55vh; overflow-y: auto; padding: 12px;
+}
+.ski-panel.open { display: block; }
+.ski-trail-item {
+  display: flex; align-items: center; gap: 8px; padding: 8px 6px;
+  border-radius: 6px; cursor: pointer; font-size: 12px; transition: background 0.15s;
+  border-bottom: 1px solid #f0f0f0;
+}
+.ski-trail-item:last-child { border-bottom: none; }
+.ski-trail-item:hover { background: #fef0f0; }
+.ski-trail-item.active { background: #fde8e8; }
+.ski-trail-color {
+  width: 24px; height: 4px; border-radius: 2px; flex-shrink: 0;
+}
+.ski-trail-name { font-weight: 600; }
+.ski-trail-info { font-size: 11px; color: #888; }
+.ski-trail-segments { margin-left: auto; color: #999; font-size: 11px; }
+.ski-show-all {
+  display: block; width: 100%; margin-top: 8px; padding: 8px;
+  background: #c0392b; color: #fff; border: none; border-radius: 6px;
+  font-size: 13px; font-weight: 600; cursor: pointer;
+}
+.ski-show-all:hover { background: #a93226; }
+.ski-show-all.active { background: #27ae60; }
+
+.right-panel-btns { position: absolute; top: 130px; right: 10px; z-index: 800; display: flex; flex-direction: column; gap: 4px; }
+.right-panel-btn {
+  background: #34495e; color: #fff; border: none; padding: 8px 14px;
+  border-radius: 8px; font-size: 12px; cursor: pointer; font-weight: 600;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3); transition: all 0.2s; text-align: left;
+}
+.right-panel-btn:hover { filter: brightness(1.1); }
+.right-panel-btn.active { filter: brightness(1.3); }
+.right-panel-btn.legend-color { background: #34495e; }
+.right-panel-btn.ski-color { background: #c0392b; }
+.right-panel-btn.transport-color { background: #2c3e50; }
+.legend-btn {
+  position: absolute; top: 170px; right: 10px; z-index: 800;
+  background: #34495e; color: #fff; border: none; padding: 8px 14px;
+  border-radius: 8px; font-size: 13px; cursor: pointer; font-weight: 600;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+.legend-btn:hover { background: #2c3e50; }
+.legend-btn.active { background: #1abc9c; }
+.legend-panel {
+  display: none; position: absolute; top: 220px; right: 10px; z-index: 800;
+  background: #fff; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+  width: 280px; max-height: 55vh; overflow-y: auto; padding: 12px;
+}
+.legend-panel.open { display: block; }
+.legend-section { margin-bottom: 10px; }
+.legend-section-title {
+  font-size: 12px; font-weight: 700; color: #666; text-transform: uppercase;
+  letter-spacing: 0.5px; margin-bottom: 6px; padding-bottom: 4px;
+  border-bottom: 1px solid #eee;
+}
+.legend-item {
+  display: flex; align-items: center; gap: 8px; padding: 5px 6px;
+  border-radius: 6px; cursor: pointer; font-size: 12px; transition: background 0.15s;
+}
+.legend-item:hover { background: #f0f0f0; }
+.legend-item.active { background: #e8f5e9; }
+.legend-swatch {
+  width: 20px; height: 4px; border-radius: 2px; flex-shrink: 0;
+}
+.legend-swatch.dashed {
+  background: repeating-linear-gradient(90deg, var(--sw-color) 0 4px, transparent 4px 8px);
+}
+.legend-swatch.dotted {
+  width: 20px; height: 6px;
+  background: repeating-linear-gradient(90deg, var(--sw-color) 0 2px, transparent 2px 5px);
+}
+.legend-swatch.circle {
+  width: 10px; height: 10px; border-radius: 50%;
+}
+.legend-swatch.rect {
+  width: 14px; height: 10px; border-radius: 2px; opacity: 0.7;
+}
+.legend-count { margin-left: auto; color: #999; font-size: 11px; }
+.legend-loader { font-size: 11px; color: #999; text-align: center; padding: 4px; }
+
+/* Mobile toggle */
+.sidebar-toggle {
+  display: none;
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  z-index: 1100;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 16px;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    position: fixed;
+    left: -100%;
+    top: 0;
+    bottom: 0;
+    width: 85%;
+    max-width: 360px;
+    transition: left 0.3s;
+    z-index: 1200;
+  }
+
+  .sidebar.open { left: 0; }
+
+  .sidebar-toggle { display: block; }
+
+  .sidebar-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 1100;
+    display: none;
+  }
+
+  .sidebar-backdrop.open { display: block; }
+}
+</style>
+</head>
+<body>
+
+<!-- Splash Screen -->
+<div id="splashScreen" style="position:fixed;inset:0;z-index:99999;background:#F4F0EB;transition:opacity 0.8s ease">
+  <iframe src="splash.html" style="width:100%;height:100%;border:none"></iframe>
+</div>
+<script>
+setTimeout(() => {
+  const splash = document.getElementById('splashScreen');
+  if (splash) {
+    splash.style.opacity = '0';
+    setTimeout(() => splash.remove(), 800);
+  }
+}, 5000);
+</script>
+
+<button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
+<div class="sidebar-backdrop" onclick="toggleSidebar()"></div>
+
+<div class="app">
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <h1>Битцевский лес</h1>
+      <p>Входные группы лыжных трасс — 360° обзор</p>
+    </div>
+
+    <div class="sidebar-tabs" id="sidebarTabs">
+      <div class="sidebar-tab active" data-tab="entries" onclick="switchSidebarTab('entries')">📍 Все входы</div>
+    </div>
+    <div class="sidebar-filters" id="sidebarFilters">
+      <div class="filter-chip active" data-filter="all" onclick="filterEntries('all', this)">Все</div>
+      <div class="filter-chip" data-filter="Кафе" onclick="filterEntries('Кафе', this)">Кафе</div>
+      <div class="filter-chip" data-filter="Прокат" onclick="filterEntries('Прокат', this)">Прокат</div>
+      <div class="filter-chip" data-filter="Гараж" onclick="filterEntries('Гараж', this)">Гараж</div>
+    </div>
+
+    <div class="sidebar-list" id="entryList"></div>
+  </aside>
+
+  <div class="map-container" style="position:relative">
+    <div id="map"></div>
+    <button class="edit-toggle" id="editToggle" onclick="toggleEditMode()" style="display:none">&#9998; Редактирование</button>
+    <div class="right-panel-btns">
+      <button class="right-panel-btn legend-color" id="legendBtn" onclick="toggleLegend()">🗺️ Легенда</button>
+      <button class="right-panel-btn ski-color" id="skiBtn" onclick="toggleSkiPanel()">⛷ Лыжные трассы</button>
+      <button class="right-panel-btn transport-color" id="transportBtn" onclick="toggleTransportPanel()">🚇 Транспорт</button>
+    </div>
+    <div class="legend-panel" id="legendPanel"></div>
+    <div class="ski-panel" id="skiPanel" style="top:220px"></div>
+    <div class="ski-panel" id="transportPanel" style="top:220px"></div>
+    <div id="zoneBtns" style="position:absolute;top:10px;left:50%;transform:translateX(-50%);z-index:1200;display:flex;gap:8px;align-items:center">
+      <button class="zone-btn" data-zone="1" onclick="toggleZone(1)">I участок</button>
+      <button class="zone-btn" data-zone="2" onclick="toggleZone(2)">II участок</button>
+      <button class="zone-btn" data-zone="3" onclick="toggleZone(3)">III участок</button>
+      <button class="zone-btn-back" id="zoneBackBtn" onclick="showAllZones()">← Все участки</button>
+    </div>
+
+    <!-- Zone overlay card -->
+    <div id="zoneCard" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.6);backdrop-filter:blur(4px);overflow-y:auto;padding:40px 20px">
+      <div id="zoneCardInner" style="max-width:720px;margin:0 auto;background:#fff;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,0.3);overflow:hidden;animation:zoneSlideUp 0.4s ease-out">
+      </div>
+    </div>
+    <button class="edit-toggle" id="drawToggle" style="top:130px;background:#1a5276;display:none" onclick="toggleDrawMode()">&#9998; Рисовать границу</button>
+    <div class="edit-banner" id="editBanner">Режим редактирования — кликните на карту, чтобы добавить точку</div>
+    <div id="drawBar" style="display:none;position:fixed;bottom:30px;left:50%;transform:translateX(-50%);z-index:99999;background:#1a5276;color:#fff;padding:12px 20px;border-radius:12px;box-shadow:0 4px 24px rgba(0,0,0,0.5);font-size:14px;white-space:nowrap;align-items:center;gap:8px" onmousedown="event.stopPropagation()" onclick="event.stopPropagation()">
+      🖊 Рисование границы <span id="drawCount" style="opacity:0.7"></span>
+      <button onmousedown="event.stopPropagation()" onclick="event.stopPropagation();undoDrawPoint()" style="margin-left:10px;padding:6px 14px;border-radius:6px;border:none;background:#e67e22;color:#fff;cursor:pointer;font-size:13px;font-weight:bold">↩ Отменить точку</button>
+      <button onmousedown="event.stopPropagation()" onclick="event.stopPropagation();finishDraw()" style="margin-left:6px;padding:6px 14px;border-radius:6px;border:none;background:#27ae60;color:#fff;cursor:pointer;font-size:13px;font-weight:bold">✓ Замкнуть</button>
+      <button onmousedown="event.stopPropagation()" onclick="event.stopPropagation();clearDraw()" style="margin-left:6px;padding:6px 14px;border-radius:6px;border:none;background:#c0392b;color:#fff;cursor:pointer;font-size:13px;font-weight:bold">✕ Очистить</button>
+    </div>
+    <div class="export-bar" id="exportBar">
+      <button onclick="exportJSON()">&#128190; Сохранить JSON</button>
+      <button onclick="undoLastChange()">&#8617; Отменить</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit form -->
+<div class="edit-overlay" id="editOverlay" onclick="closeEditForm()"></div>
+<div class="edit-form-popup" id="editForm">
+  <h3 id="editFormTitle">Новая точка</h3>
+  <div class="coords" id="editCoords"></div>
+  <label>Название</label>
+  <input type="text" id="editName" placeholder="Входная группа №16">
+  <label>Описание</label>
+  <textarea id="editDesc" placeholder="Описание точки"></textarea>
+  <label>Тип</label>
+  <select id="editType">
+    <option value="entry">Входная группа</option>
+    <option value="infrastructure">Инфраструктура</option>
+    <option value="proposed">Предлагаемая ВГ</option>
+  </select>
+  <label>Парковка</label>
+  <input type="text" id="editParking" placeholder="P100">
+  <label>Инфраструктура (через запятую)</label>
+  <input type="text" id="editInfra" placeholder="Кафе, Гараж, Модульный туалет">
+  <div class="edit-form-btns">
+    <button class="btn-cancel" onclick="closeEditForm()">Отмена</button>
+    <button class="btn-delete" id="editDeleteBtn" onclick="deleteEditPoint()" style="display:none">Удалить</button>
+    <button class="btn-save" onclick="saveEditForm()">Сохранить</button>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modal">
+  <div class="modal-header">
+    <h2 id="modalTitle">Входная группа</h2>
+    <button class="modal-close" onclick="closeModal()">×</button>
+  </div>
+
+  <div class="modal-tabs">
+    <div class="modal-tab active" data-tab="view360" onclick="switchTab('view360', this)">360° Панорама</div>
+  </div>
+
+  <div class="modal-body">
+    <!-- 360 viewer -->
+    <div class="viewer-360 active" id="tab-view360">
+      <div id="panorama" style="width:100%;height:100%;"></div>
+      <div class="placeholder-360" id="placeholder360">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="12" cy="12" r="10"/>
+          <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10A15.3 15.3 0 0 1 12 2z"/>
+        </svg>
+        <p>360° фото пока не загружено</p>
+        <small>Используйте prepare_photos.py для загрузки панорам с Insta360</small>
+      </div>
+    </div>
+
+    <!-- Before/After -->
+    <div class="compare-container" id="tab-compare">
+      <div class="compare-placeholder" id="comparePlaceholder">
+        <div style="text-align:center">
+          <p>Загрузите 360-фото и рендер для сравнения</p>
+          <small style="font-size:12px;display:block;margin-top:8px;">Перетаскивайте слайдер для сравнения до/после</small>
+        </div>
+      </div>
+      <div class="compare-before" id="compareBefore">
+        <img id="compareBeforeImg" src="" alt="До">
+      </div>
+      <div class="compare-after" id="compareAfter">
+        <img id="compareAfterImg" src="" alt="После">
+      </div>
+      <div class="compare-slider" id="compareSlider"></div>
+      <div class="compare-label before">Текущее состояние</div>
+      <div class="compare-label after">Предложение</div>
+    </div>
+
+    <!-- Gallery -->
+    <div class="gallery-container" id="tab-gallery">
+      <div class="gallery-placeholder" id="galleryPlaceholder">
+        <p>Визуализации предложений</p>
+        <small>Добавьте рендеры в папку renders/ и укажите их в entry_points.json</small>
+      </div>
+      <div class="gallery-grid" id="galleryGrid"></div>
+    </div>
+
+    <!-- Info overlay -->
+    <div class="modal-info" id="modalInfo">
+      <div id="modalInfoContent"></div>
+      <div class="info-tags" id="modalInfoTags"></div>
+    </div>
+  </div>
+</div>
+
+<script src="lib/leaflet.js"></script>
+<script src="lib/pannellum.js"></script>
+<script>
+let entryPoints = [];
+let markers = {};
+let viewpointMarkers = [];
+let activeFilter = 'all';
+let currentEntry = null;
+let pannellumViewer = null;
+let map;
+
+// Cached DOM refs
+const $ = id => document.getElementById(id);
+
+// Get thumbnail path from full photo path
+function thumbPath(photoPath) {
+  if (!photoPath) return '';
+  return photoPath;
+}
+
+// Boundary drawn manually on map
+const parkParts = [
+  [
+    [55.560741,37.507925],
+    [55.562003,37.50638],
+    [55.5625,37.505736],
+    [55.562804,37.505822],
+    [55.563386,37.505522],
+    [55.564102,37.5052],
+    [55.56483,37.504127],
+    [55.565097,37.503848],
+    [55.565388,37.50402],
+    [55.56574,37.504084],
+    [55.565849,37.503226],
+    [55.565995,37.502754],
+    [55.566225,37.50226],
+    [55.566844,37.501423],
+    [55.567742,37.500393],
+    [55.569513,37.498784],
+    [55.569987,37.499192],
+    [55.570448,37.499664],
+    [55.57069,37.50035],
+    [55.571054,37.500715],
+    [55.571042,37.501681],
+    [55.571151,37.502775],
+    [55.571272,37.503912],
+    [55.570969,37.504406],
+    [55.57029,37.505522],
+    [55.570217,37.506444],
+    [55.570181,37.506917],
+    [55.570253,37.507517],
+    [55.570593,37.508655],
+    [55.570763,37.50917],
+    [55.571163,37.509234],
+    [55.571406,37.509341],
+    [55.571479,37.510328],
+    [55.571539,37.511637],
+    [55.571624,37.51271],
+    [55.571697,37.513568],
+    [55.571697,37.514534],
+    [55.571624,37.515371],
+    [55.571539,37.516272],
+    [55.571467,37.517281],
+    [55.571297,37.517924],
+    [55.57143,37.518826],
+    [55.571576,37.519598],
+    [55.57217,37.519212],
+    [55.572704,37.51889],
+    [55.573493,37.518761],
+    [55.574245,37.51874],
+    [55.574827,37.518718],
+    [55.575312,37.518182],
+    [55.575846,37.516937],
+    [55.576295,37.516186],
+    [55.576877,37.515006],
+    [55.577314,37.514083],
+    [55.577471,37.513289],
+    [55.57735,37.511895],
+    [55.576707,37.510757],
+    [55.575894,37.509856],
+    [55.575494,37.50917],
+    [55.575385,37.508633],
+    [55.575543,37.507367],
+    [55.575943,37.506638],
+    [55.576222,37.506616],
+    [55.576452,37.506766],
+    [55.576792,37.505629],
+    [55.577144,37.504942],
+    [55.577386,37.504063],
+    [55.577568,37.502453],
+    [55.577629,37.501638],
+    [55.577617,37.500973],
+    [55.577326,37.500651],
+    [55.576853,37.500222],
+    [55.576283,37.500286],
+    [55.575979,37.500501],
+    [55.575967,37.500844],
+    [55.576016,37.501101],
+    [55.575822,37.501123],
+    [55.575397,37.500715],
+    [55.57513,37.500544],
+    [55.574778,37.500436],
+    [55.574815,37.501016],
+    [55.574706,37.50196],
+    [55.574487,37.502882],
+    [55.574475,37.503505],
+    [55.574548,37.504449],
+    [55.574536,37.505414],
+    [55.574548,37.506359],
+    [55.574621,37.507324],
+    [55.574633,37.508268],
+    [55.575033,37.50859],
+    [55.574754,37.508612],
+    [55.574572,37.508376],
+    [55.574281,37.508183],
+    [55.574038,37.507946],
+    [55.573699,37.507625],
+    [55.573444,37.507324],
+    [55.573201,37.50756],
+    [55.573007,37.507775],
+    [55.572983,37.507153],
+    [55.57285,37.506616],
+    [55.572837,37.506187],
+    [55.572534,37.505779],
+    [55.572243,37.504835],
+    [55.571721,37.504427],
+    [55.57194,37.503741],
+    [55.572534,37.503912],
+    [55.572777,37.503719],
+    [55.572413,37.501595],
+    [55.573298,37.501059],
+    [55.573444,37.502282],
+    [55.574245,37.501938],
+    [55.574148,37.500436],
+    [55.574075,37.500072],
+    [55.573432,37.4999],
+    [55.573214,37.499428],
+    [55.574973,37.499557],
+    [55.575179,37.498913],
+    [55.575276,37.497604],
+    [55.575349,37.496252],
+    [55.576756,37.497196],
+    [55.576622,37.498419],
+    [55.577083,37.498827],
+    [55.577532,37.498999],
+    [55.578405,37.497668],
+    [55.578405,37.498419],
+    [55.578927,37.498848],
+    [55.57889,37.497754],
+    [55.579254,37.498741],
+    [55.579776,37.498763],
+    [55.579448,37.497239],
+    [55.58014,37.49475],
+    [55.579921,37.494321],
+    [55.579594,37.494771],
+    [55.579194,37.494965],
+    [55.578951,37.495694],
+    [55.577714,37.495973],
+    [55.577508,37.496338],
+    [55.576307,37.495737],
+    [55.575664,37.495458],
+    [55.575797,37.491424],
+    [55.57621,37.490351],
+    [55.576792,37.490759],
+    [55.576804,37.491081],
+    [55.577095,37.491102],
+    [55.577144,37.488141],
+    [55.577957,37.485588],
+    [55.578026,37.485502],
+    [55.578078,37.485625],
+    [55.577957,37.485974],
+    [55.578111,37.486151],
+    [55.578336,37.485534],
+    [55.578706,37.485604],
+    [55.578084,37.487454],
+    [55.57926,37.487712],
+    [55.5798,37.485652],
+    [55.582177,37.485781],
+    [55.583123,37.490201],
+    [55.583924,37.49033],
+    [55.584239,37.489944],
+    [55.587198,37.490587],
+    [55.587756,37.490973],
+    [55.588775,37.490845],
+    [55.58892,37.488828],
+    [55.590133,37.48827],
+    [55.591927,37.492132],
+    [55.596971,37.484794],
+    [55.597311,37.485223],
+    [55.597844,37.48518],
+    [55.599105,37.486467],
+    [55.599469,37.487369],
+    [55.599687,37.48827],
+    [55.599808,37.489171],
+    [55.599226,37.489557],
+    [55.598378,37.489042],
+    [55.598062,37.489686],
+    [55.597529,37.490501],
+    [55.597941,37.49269],
+    [55.600099,37.492046],
+    [55.600099,37.49342],
+    [55.599444,37.498183],
+    [55.599153,37.499514],
+    [55.599202,37.501788],
+    [55.599614,37.502089],
+    [55.599687,37.503033],
+    [55.598717,37.505178],
+    [55.597359,37.507496],
+    [55.596341,37.50947],
+    [55.595274,37.51256],
+    [55.594207,37.51565],
+    [55.593625,37.517796],
+    [55.595031,37.518396],
+    [55.595807,37.519169],
+    [55.596583,37.520113],
+    [55.59765,37.5208],
+    [55.598426,37.520456],
+    [55.599299,37.519169],
+    [55.599735,37.520285],
+    [55.59925,37.522345],
+    [55.599202,37.523975],
+    [55.598717,37.525949],
+    [55.598135,37.524834],
+    [55.597893,37.523632],
+    [55.597262,37.524576],
+    [55.596935,37.525134],
+    [55.596547,37.52655],
+    [55.596292,37.526808],
+    [55.596535,37.527237],
+    [55.596729,37.527752],
+    [55.596838,37.528417],
+    [55.597311,37.52861],
+    [55.597662,37.528696],
+    [55.597917,37.528911],
+    [55.597868,37.529726],
+    [55.59708,37.52979],
+    [55.59668,37.529383],
+    [55.595116,37.530456],
+    [55.594862,37.530649],
+    [55.594944,37.530751],
+    [55.594634,37.531282],
+    [55.594234,37.53155],
+    [55.594262,37.531684],
+    [55.594013,37.531765],
+    [55.593843,37.531732],
+    [55.593007,37.531743],
+    [55.592376,37.531958],
+    [55.592194,37.532258],
+    [55.591952,37.532494],
+    [55.59177,37.532601],
+    [55.591394,37.53273],
+    [55.591091,37.533073],
+    [55.590715,37.534747],
+    [55.5904,37.535927],
+    [55.589951,37.537966],
+    [55.589405,37.540154],
+    [55.589151,37.540841],
+    [55.58755,37.547407],
+    [55.588114,37.548105],
+    [55.588866,37.548383],
+    [55.588799,37.548877],
+    [55.58906,37.549006],
+    [55.589248,37.548813],
+    [55.589624,37.549199],
+    [55.589866,37.549145],
+    [55.590594,37.549253],
+    [55.590782,37.548941],
+    [55.591048,37.549145],
+    [55.59117,37.549489],
+    [55.591315,37.549124],
+    [55.591624,37.549403],
+    [55.591739,37.549306],
+    [55.591806,37.548952],
+    [55.591927,37.549016],
+    [55.59194,37.549328],
+    [55.592479,37.549446],
+    [55.59271,37.54921],
+    [55.592964,37.549188],
+    [55.593304,37.549767],
+    [55.593934,37.548416],
+    [55.594537,37.548432],
+    [55.594437,37.54775],
+    [55.595698,37.541732],
+    [55.595923,37.541914],
+    [55.595971,37.541646],
+    [55.596189,37.541871],
+    [55.596541,37.543277],
+    [55.59688,37.54377],
+    [55.597232,37.54407],
+    [55.597844,37.544425],
+    [55.598032,37.544446],
+    [55.598196,37.54362],
+    [55.598123,37.543491],
+    [55.598202,37.543212],
+    [55.59845,37.543277],
+    [55.59865,37.543534],
+    [55.59919,37.545004],
+    [55.599105,37.545476],
+    [55.599299,37.545862],
+    [55.59959,37.545755],
+    [55.599869,37.545884],
+    [55.599875,37.546227],
+    [55.60002,37.546613],
+    [55.599838,37.546999],
+    [55.599123,37.546849],
+    [55.59902,37.547804],
+    [55.598753,37.548491],
+    [55.598602,37.549134],
+    [55.598717,37.549424],
+    [55.598602,37.550143],
+    [55.600081,37.55084],
+    [55.600238,37.551098],
+    [55.601493,37.552085],
+    [55.60113,37.553093],
+    [55.601033,37.553673],
+    [55.600584,37.554359],
+    [55.601287,37.555518],
+    [55.60256,37.55643],
+    [55.602639,37.556065],
+    [55.602815,37.556012],
+    [55.602887,37.555121],
+    [55.602748,37.555068],
+    [55.602899,37.554606],
+    [55.603984,37.555282],
+    [55.604233,37.555411],
+    [55.604512,37.555776],
+    [55.604518,37.55628],
+    [55.604705,37.556376],
+    [55.604699,37.556623],
+    [55.606348,37.556752],
+    [55.60676,37.556784],
+    [55.606827,37.557213],
+    [55.60716,37.557288],
+    [55.607396,37.556999],
+    [55.607554,37.555411],
+    [55.607469,37.554885],
+    [55.607105,37.554874],
+    [55.607105,37.554467],
+    [55.607687,37.553018],
+    [55.607972,37.55127],
+    [55.608827,37.551098],
+    [55.608942,37.551581],
+    [55.608917,37.551988],
+    [55.609111,37.552192],
+    [55.609233,37.553008],
+    [55.609839,37.553608],
+    [55.610105,37.554982],
+    [55.610511,37.55511],
+    [55.610602,37.555518],
+    [55.610523,37.555883],
+    [55.610602,37.556344],
+    [55.610869,37.556291],
+    [55.611644,37.556237],
+    [55.611869,37.556221],
+    [55.612556,37.555513],
+    [55.61339,37.554633],
+    [55.613547,37.554767],
+    [55.613599,37.554156],
+    [55.613768,37.553914],
+    [55.614326,37.55304],
+    [55.615792,37.550894],
+    [55.617243,37.548974],
+    [55.617752,37.54797],
+    [55.618437,37.546871],
+    [55.618561,37.546586],
+    [55.618849,37.545723],
+    [55.619788,37.544425],
+    [55.619842,37.543963],
+    [55.619824,37.543727],
+    [55.619727,37.543598],
+    [55.618631,37.542676],
+    [55.615734,37.54068],
+    [55.615886,37.539768],
+    [55.615589,37.539071],
+    [55.615159,37.538685],
+    [55.615165,37.537944],
+    [55.614801,37.536839],
+    [55.614595,37.536668],
+    [55.614614,37.536442],
+    [55.614444,37.536399],
+    [55.614832,37.534361],
+    [55.615201,37.5345],
+    [55.615813,37.534736],
+    [55.615995,37.533975],
+    [55.616116,37.533824],
+    [55.616352,37.533653],
+    [55.616383,37.533288],
+    [55.616165,37.532907],
+    [55.61608,37.532896],
+    [55.616031,37.532548],
+    [55.616095,37.532478],
+    [55.616056,37.532279],
+    [55.61601,37.532113],
+    [55.615789,37.53185],
+    [55.615886,37.531609],
+    [55.615983,37.530735],
+    [55.61618,37.528991],
+    [55.616359,37.527081],
+    [55.616549,37.52551],
+    [55.614089,37.523777],
+    [55.614005,37.523793],
+    [55.613956,37.523879],
+    [55.613656,37.525268],
+    [55.613714,37.525917],
+    [55.613771,37.526813],
+    [55.613744,37.527618],
+    [55.613647,37.528256],
+    [55.613465,37.528659],
+    [55.613317,37.529039],
+    [55.613174,37.52934],
+    [55.613105,37.529554],
+    [55.612959,37.529227],
+    [55.612938,37.529104],
+    [55.613056,37.528251],
+    [55.613038,37.528079],
+    [55.612447,37.527215],
+    [55.612362,37.527167],
+    [55.612241,37.527205],
+    [55.611972,37.527301],
+    [55.611893,37.527414],
+    [55.611817,37.527274],
+    [55.61096,37.526722],
+    [55.610457,37.526373],
+    [55.60992,37.526008],
+    [55.609481,37.525687],
+    [55.609145,37.525472],
+    [55.60883,37.525247],
+    [55.608739,37.525113],
+    [55.60859,37.524812],
+    [55.608563,37.524426],
+    [55.608942,37.523085],
+    [55.609305,37.522189],
+    [55.609475,37.522044],
+    [55.609526,37.521814],
+    [55.610339,37.520494],
+    [55.610896,37.519866],
+    [55.611663,37.519544],
+    [55.612075,37.519319],
+    [55.61215,37.519373],
+    [55.612572,37.51896],
+    [55.613683,37.517227],
+    [55.613632,37.517152],
+    [55.613989,37.516465],
+    [55.614044,37.51654],
+    [55.614244,37.516186],
+    [55.614195,37.51609],
+    [55.614901,37.51492],
+    [55.615095,37.514614],
+    [55.615753,37.513837],
+    [55.615856,37.514073],
+    [55.616989,37.513123],
+    [55.617189,37.512951],
+    [55.617752,37.512367],
+    [55.618212,37.512785],
+    [55.61877,37.511938],
+    [55.618921,37.511895],
+    [55.618964,37.512109],
+    [55.619267,37.511777],
+    [55.619412,37.511787],
+    [55.619539,37.511744],
+    [55.61966,37.51183],
+    [55.61983,37.511562],
+    [55.620636,37.511401],
+    [55.62189,37.512023],
+    [55.622175,37.511959],
+    [55.623126,37.512313],
+    [55.623671,37.51285],
+    [55.623895,37.512367],
+    [55.62404,37.512474],
+    [55.624495,37.511787],
+    [55.625446,37.512817],
+    [55.628444,37.516294],
+    [55.626082,37.51992],
+    [55.625452,37.521937],
+    [55.624313,37.524576],
+    [55.625949,37.526679],
+    [55.626033,37.527215],
+    [55.626251,37.527108],
+    [55.6263,37.5267],
+    [55.626518,37.526937],
+    [55.627221,37.525885],
+    [55.62739,37.525971],
+    [55.627754,37.52552],
+    [55.628553,37.52419],
+    [55.628735,37.523932],
+    [55.630128,37.52449],
+    [55.630722,37.525477],
+    [55.63094,37.526271],
+    [55.631194,37.526979],
+    [55.631521,37.527816],
+    [55.631969,37.528267],
+    [55.63243,37.528718],
+    [55.631751,37.531893],
+    [55.631582,37.533739],
+    [55.63163,37.535262],
+    [55.631751,37.536271],
+    [55.631921,37.537322],
+    [55.63203,37.537515],
+    [55.631751,37.539253],
+    [55.631533,37.540927],
+    [55.63398,37.542171],
+    [55.636523,37.54406],
+    [55.638413,37.545433],
+    [55.639357,37.546334],
+    [55.640108,37.547922],
+    [55.64069,37.549253],
+    [55.641368,37.551098],
+    [55.641634,37.551742],
+    [55.642627,37.551699],
+    [55.643015,37.551742],
+    [55.643305,37.551312],
+    [55.643548,37.552299],
+    [55.644298,37.552385],
+    [55.645049,37.552299],
+    [55.645582,37.555475],
+    [55.644904,37.556205],
+    [55.644589,37.556977],
+    [55.644177,37.558093],
+    [55.644032,37.558951],
+    [55.64471,37.560196],
+    [55.646284,37.561998],
+    [55.647955,37.563286],
+    [55.648706,37.56393],
+    [55.649239,37.564874],
+    [55.648464,37.568092],
+    [55.647979,37.570539],
+    [55.647325,37.573242],
+    [55.646284,37.576761],
+    [55.645437,37.579336],
+    [55.644734,37.582083],
+    [55.643911,37.584357],
+    [55.643184,37.586975],
+    [55.642869,37.588134],
+    [55.641852,37.588005],
+    [55.640036,37.587876],
+    [55.638534,37.587318],
+    [55.636984,37.58719],
+    [55.63553,37.586589],
+    [55.635022,37.586374],
+    [55.635022,37.587018],
+    [55.634949,37.588391],
+    [55.634416,37.588563],
+    [55.633762,37.588263],
+    [55.633544,37.589035],
+    [55.633302,37.589121],
+    [55.632841,37.589164],
+    [55.632575,37.590194],
+    [55.632454,37.590923],
+    [55.632866,37.592082],
+    [55.632914,37.593284],
+    [55.632502,37.593799],
+    [55.631872,37.592983],
+    [55.631412,37.591739],
+    [55.631146,37.591739],
+    [55.630419,37.591567],
+    [55.629207,37.591138],
+    [55.628602,37.590494],
+    [55.627633,37.590065],
+    [55.626881,37.590065],
+    [55.626373,37.590451],
+    [55.625912,37.588735],
+    [55.625525,37.587919],
+    [55.624846,37.587876],
+    [55.624265,37.587447],
+    [55.624022,37.585902],
+    [55.624555,37.585516],
+    [55.625161,37.585645],
+    [55.625331,37.584486],
+    [55.625331,37.583756],
+    [55.624628,37.583542],
+    [55.62378,37.583284],
+    [55.623562,37.583499],
+    [55.623441,37.584143],
+    [55.623053,37.584057],
+    [55.622423,37.583542],
+    [55.621599,37.58307],
+    [55.62126,37.582383],
+    [55.620703,37.582297],
+    [55.619394,37.581654],
+    [55.6192,37.580667],
+    [55.618933,37.582169],
+    [55.617988,37.581353],
+    [55.616825,37.580967],
+    [55.616074,37.580323],
+    [55.614935,37.580967],
+    [55.614668,37.579937],
+    [55.614498,37.578564],
+    [55.613844,37.577834],
+    [55.612753,37.576547],
+    [55.611057,37.575688],
+    [55.609384,37.575302],
+    [55.608584,37.574143],
+    [55.608342,37.572598],
+    [55.608463,37.570796],
+    [55.608439,37.569766],
+    [55.607736,37.56968],
+    [55.607299,37.569809],
+    [55.606912,37.571139],
+    [55.606184,37.571912],
+    [55.60616,37.573586],
+    [55.606669,37.573972],
+    [55.606621,37.575259],
+    [55.60599,37.576118],
+    [55.604972,37.577233],
+    [55.604366,37.578735],
+    [55.604366,37.580581],
+    [55.60439,37.581825],
+    [55.603469,37.581654],
+    [55.602524,37.580838],
+    [55.601142,37.579937],
+    [55.600075,37.581439],
+    [55.597747,37.580795],
+    [55.59685,37.580194],
+    [55.595953,37.580194],
+    [55.595662,37.581267],
+    [55.595589,37.583714],
+    [55.595589,37.585988],
+    [55.595516,37.587833],
+    [55.595007,37.590065],
+    [55.593843,37.593412],
+    [55.59297,37.592726],
+    [55.591758,37.590923],
+    [55.590594,37.589378],
+    [55.589672,37.588263],
+    [55.589041,37.587833],
+    [55.58909,37.589936],
+    [55.589357,37.590752],
+    [55.589017,37.590966],
+    [55.588459,37.594013],
+    [55.58738,37.593906],
+    [55.587028,37.594357],
+    [55.586968,37.5947],
+    [55.586968,37.595387],
+    [55.586616,37.595665],
+    [55.586204,37.595687],
+    [55.585852,37.595236],
+    [55.585125,37.595086],
+    [55.584555,37.595043],
+    [55.584179,37.595172],
+    [55.583972,37.594807],
+    [55.583997,37.593992],
+    [55.583839,37.593627],
+    [55.5843,37.590301],
+    [55.584276,37.589915],
+    [55.58379,37.589872],
+    [55.583208,37.589915],
+    [55.581244,37.589829],
+    [55.581037,37.589314],
+    [55.581122,37.587168],
+    [55.581316,37.585473],
+    [55.581535,37.58528],
+    [55.582129,37.585516],
+    [55.582359,37.58513],
+    [55.582432,37.584808],
+    [55.582881,37.584314],
+    [55.582966,37.583735],
+    [55.583439,37.583241],
+    [55.583778,37.583263],
+    [55.583815,37.582448],
+    [55.584057,37.581439],
+    [55.584482,37.580645],
+    [55.584506,37.580173],
+    [55.584749,37.58013],
+    [55.584724,37.578821],
+    [55.584239,37.578135],
+    [55.583536,37.57807],
+    [55.582735,37.574444],
+    [55.582541,37.57395],
+    [55.582432,37.573156],
+    [55.582384,37.572598],
+    [55.582287,37.571483],
+    [55.582105,37.571096],
+    [55.581668,37.571139],
+    [55.58111,37.571483],
+    [55.580479,37.570925],
+    [55.579339,37.569852],
+    [55.578417,37.568607],
+    [55.577447,37.56732],
+    [55.576525,37.566462],
+    [55.57587,37.565475],
+    [55.575094,37.56453],
+    [55.574342,37.564058],
+    [55.572486,37.562492],
+    [55.571709,37.562063],
+    [55.571345,37.561634],
+    [55.571103,37.56144],
+    [55.571248,37.560818],
+    [55.570642,37.560368],
+    [55.57035,37.561119],
+    [55.570108,37.560947],
+    [55.569441,37.560668],
+    [55.569331,37.560024],
+    [55.569222,37.560239],
+    [55.568907,37.560089],
+    [55.568798,37.559853],
+    [55.569028,37.558951],
+    [55.567888,37.557878],
+    [55.567536,37.557836],
+    [55.567317,37.558415],
+    [55.567135,37.5576],
+    [55.566723,37.557342],
+    [55.566456,37.557557],
+    [55.566274,37.557535],
+    [55.566092,37.555947],
+    [55.564988,37.555046],
+    [55.564551,37.556484],
+    [55.56409,37.556355],
+    [55.563592,37.555132],
+    [55.563289,37.554939],
+    [55.563131,37.555325],
+    [55.562949,37.555196],
+    [55.563289,37.554209],
+    [55.563253,37.553737],
+    [55.563386,37.553158],
+    [55.563301,37.551763],
+    [55.563253,37.551076],
+    [55.562998,37.550948],
+    [55.562597,37.551484],
+    [55.562221,37.552257],
+    [55.562015,37.552922],
+    [55.56159,37.554767],
+    [55.560947,37.55466],
+    [55.560534,37.554574],
+    [55.560195,37.554424],
+    [55.5596,37.554317],
+    [55.558775,37.553952],
+    [55.558556,37.553844],
+    [55.558508,37.553351],
+    [55.556736,37.552621],
+    [55.555741,37.552171],
+    [55.554988,37.551892],
+    [55.554721,37.551742],
+    [55.553969,37.549982],
+    [55.553338,37.548716],
+    [55.552913,37.547858],
+    [55.552476,37.545712],
+    [55.552355,37.54436],
+    [55.552658,37.542322],
+    [55.552949,37.540433],
+    [55.553398,37.538245],
+    [55.553678,37.536957],
+    [55.553884,37.536743],
+    [55.554175,37.535284],
+    [55.554139,37.534811],
+    [55.554915,37.53125],
+    [55.555134,37.530992],
+    [55.555814,37.527087],
+    [55.556044,37.525949],
+    [55.556323,37.523782],
+    [55.556105,37.523246],
+    [55.556396,37.521636],
+    [55.556542,37.520649],
+    [55.5567,37.519619],
+    [55.556857,37.519062],
+    [55.557355,37.515392],
+    [55.557889,37.513547],
+    [55.558629,37.511938],
+    [55.559333,37.51065],
+    [55.559818,37.509749],
+    [55.560304,37.508762],
+    [55.560534,37.508268],
+    [55.560704,37.507968],
+    [55.560741,37.507925]
+  ]
+];
+
+function filteredEntries() {
+  if (activeFilter === 'all') return entryPoints;
+  const f = activeFilter.toLowerCase();
+  return entryPoints.filter(ep => ep.infrastructure.some(i => i.toLowerCase().includes(f)));
+}
+
+async function init() {
+  map = L.map('map', { center: [55.610, 37.568], zoom: 13 });
+
+  const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '' });
+  map.attributionControl.setPrefix(false);
+  map.attributionControl.remove();
+  const sat = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: '' });
+  osm.addTo(map);
+
+  // Custom layer switcher
+  const layerBtn = L.control({ position: 'topright' });
+  layerBtn.onAdd = function() {
+    const div = L.DomUtil.create('div', 'layer-switcher');
+    div.innerHTML = `
+      <div class="layer-switcher-btn" onclick="switchBaseLayer(event)">
+        <div class="layer-thumb" id="layerThumb">
+          <img src="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/13/2560/4924" alt="">
+          <span>Спутник</span>
+        </div>
+      </div>`;
+    L.DomEvent.disableClickPropagation(div);
+    return div;
+  };
+  layerBtn.addTo(map);
+
+  let currentBase = 'osm';
+  window.switchBaseLayer = function(e) {
+    e.stopPropagation();
+    const thumb = document.getElementById('layerThumb');
+    if (currentBase === 'osm') {
+      map.removeLayer(osm);
+      sat.addTo(map);
+      sat.bringToBack();
+      currentBase = 'sat';
+      thumb.innerHTML = '<img src="https://b.tile.openstreetmap.org/13/4924/2560.png" alt=""><span>Схема</span>';
+    } else {
+      map.removeLayer(sat);
+      osm.addTo(map);
+      osm.bringToBack();
+      currentBase = 'osm';
+      thumb.innerHTML = '<img src="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/13/2560/4924" alt=""><span>Спутник</span>';
+    }
+  };
+
+  const parkStyle = { color: '#2d5a27', weight: 2, fillColor: '#4a8c3f', fillOpacity: 0.1, dashArray: '8, 4' };
+  const parkGroup = L.featureGroup();
+  parkParts.forEach(part => L.polygon(part, parkStyle).addTo(parkGroup));
+  parkGroup.addTo(map);
+
+  // Transport: loaded on demand via transport panel
+
+  try {
+    entryPoints = await (await fetch('entry_points.json?v=' + Date.now())).json();
+  } catch { entryPoints = []; }
+
+  map.on('click', onMapClickEdit);
+  render();
+}
+
+function render() {
+  const entries = filteredEntries();
+  renderEntries(entries);
+  renderMarkers(entries);
+}
+
+function renderMarkers(entries) {
+  Object.values(markers).forEach(m => map.removeLayer(m));
+  markers = {};
+  viewpointMarkers.forEach(m => map.removeLayer(m));
+  viewpointMarkers = [];
+
+  entries.forEach(ep => {
+    const hasPhoto = !!ep.photo360;
+    const isInfra = ep.type === 'infrastructure';
+    const cls = isInfra ? 'infra-point' : ep.proposed ? 'proposed' : hasPhoto ? 'has-photo' : ep.infrastructure.length ? 'has-infra' : '';
+    const label = isInfra ? '⛸' : ep.id;
+    const icon = L.divIcon({
+      className: '',
+      html: `<div class="marker-icon ${cls}">${label}</div>`,
+      iconSize: [32, 32], iconAnchor: [16, 16]
+    });
+
+    const zIdx = isInfra ? 500 : 2000;
+    const marker = L.marker([ep.lat, ep.lng], { icon, draggable: editMode, zIndexOffset: zIdx }).addTo(map);
+    const infra = ep.infrastructure.join(', ') || 'Без инфраструктуры';
+
+    if (editMode) {
+      marker.on('dragend', () => {
+        undoStack.push(JSON.parse(JSON.stringify(entryPoints)));
+        const pos = marker.getLatLng();
+        ep.lat = parseFloat(pos.lat.toFixed(6));
+        ep.lng = parseFloat(pos.lng.toFixed(6));
+        renderEntries(filteredEntries());
+      });
+      marker.on('click', (e) => {
+        L.DomEvent.stopPropagation(e);
+        openEditForm(ep);
+      });
+    } else {
+      const thumbHtml = ep.photo360
+        ? `<img class="popup-thumb" src="${thumbPath(ep.photo360)}" alt="Превью" onclick="openModal('${ep.id}')" loading="lazy">`
+        : '';
+      marker.bindPopup(`<div style="min-width:180px;max-width:220px">
+        <strong>${ep.name}</strong><br>
+        <span style="font-size:12px;color:#666">${ep.description}</span><br>
+        <span style="font-size:11px;color:#888">${infra}</span>
+        ${ep.parking ? `<br><span style="font-size:11px">🅿️ ${ep.parking}</span>` : ''}
+        ${thumbHtml}
+        <br><button onclick="openModal('${ep.id}')" style="margin-top:8px;padding:6px 12px;background:#2d5a27;color:white;border:none;border-radius:4px;cursor:pointer;font-size:12px">Открыть 360°</button>
+      </div>`, { autoPan: true, autoPanPadding: [20, 20] });
+      marker.on('click', () => highlightEntry(ep.id));
+    }
+    markers[ep.id] = marker;
+
+    // Viewpoint markers
+    if (ep.viewpoints) {
+      ep.viewpoints.forEach(vp => {
+        const vpIcon = L.divIcon({
+          className: '',
+          html: '<div class="viewpoint-icon"></div>',
+          iconSize: [18, 18], iconAnchor: [9, 9]
+        });
+        const vpMarker = L.marker([vp.lat, vp.lng], { icon: vpIcon, draggable: editMode, zIndexOffset: 500 }).addTo(map);
+        if (editMode) {
+          vpMarker.on('dragend', () => {
+            undoStack.push(JSON.parse(JSON.stringify(entryPoints)));
+            const pos = vpMarker.getLatLng();
+            vp.lat = parseFloat(pos.lat.toFixed(6));
+            vp.lng = parseFloat(pos.lng.toFixed(6));
+          });
+        } else {
+          const vpPhoto = vp.photo360 || vp.photo;
+          const vpThumbHtml = vpPhoto
+            ? `<img class="popup-thumb" src="${thumbPath(vpPhoto)}" alt="Превью" onclick="openViewpoint('${vpPhoto}','${ep.name} — ${vp.name}')" loading="lazy">`
+            : '';
+          vpMarker.bindPopup(`<div style="min-width:180px">
+            <strong>${ep.name} — ${vp.name}</strong>
+            ${vpThumbHtml}
+            <br><button onclick="openViewpoint('${vpPhoto}','${ep.name} — ${vp.name}')" style="margin-top:8px;padding:6px 12px;background:#e8a838;color:#1a1a1a;border:none;border-radius:4px;cursor:pointer;font-size:12px;font-weight:600">Открыть 360°</button>
+          </div>`);
+        }
+        viewpointMarkers.push(vpMarker);
+      });
+    }
+  });
+}
+
+function renderEntries(entries) {
+  const list = $('entryList');
+  list.innerHTML = '';
+
+  entries.forEach(ep => {
+    const card = document.createElement('div');
+    card.className = 'entry-card';
+    card.dataset.id = ep.id;
+    card.onclick = () => {
+      map.setView([ep.lat, ep.lng], 15);
+      markers[ep.id]?.openPopup();
+      highlightEntry(ep.id);
+    };
+
+    card.innerHTML = `
+      <div class="entry-card-header">
+        <div class="entry-number">${ep.id}</div>
+        <div class="entry-name">${ep.name}</div>
+      </div>
+      <div class="entry-desc">${ep.description}</div>
+      ${ep.infrastructure.length ? `<div class="entry-tags">${ep.infrastructure.map(i => `<span class="entry-tag">${i}</span>`).join('')}</div>` : ''}
+      <div class="entry-status">
+        ${ep.photo360 ? '<span style="font-size:10px;color:#4caf50;font-weight:600">📷 360°</span>' : '<span style="font-size:10px;color:#aaa">нет фото</span>'}
+        ${(ep.viewpoints?.length || 0) > 0 ? `<span style="font-size:10px;color:#e8a838;margin-left:6px">+${ep.viewpoints.length} ${ep.viewpoints.length === 1 ? 'ракурс' : ep.viewpoints.length < 5 ? 'ракурса' : 'ракурсов'}</span>` : ''}
+      </div>`;
+
+    list.appendChild(card);
+  });
+}
+
+function highlightEntry(id) {
+  document.querySelectorAll('.entry-card').forEach(c => c.classList.remove('active'));
+  const card = document.querySelector(`.entry-card[data-id="${id}"]`);
+  if (card) { card.classList.add('active'); card.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
+}
+
+function filterEntries(filter, chip) {
+  activeFilter = filter;
+  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+  chip.classList.add('active');
+  render();
+}
+
+function openModal(id) {
+  currentEntry = entryPoints.find(ep => String(ep.id) === String(id));
+  if (!currentEntry) return;
+
+  $('modalTitle').textContent = currentEntry.name;
+  switchTab('view360', document.querySelector('[data-tab="view360"]'));
+
+  if (pannellumViewer) { pannellumViewer.destroy(); pannellumViewer = null; }
+
+  const has360 = !!currentEntry.photo360;
+  $('placeholder360').style.display = has360 ? 'none' : 'flex';
+  $('panorama').style.display = has360 ? 'block' : 'none';
+  if (has360) {
+    showLoadingSpinner('panorama');
+    pannellumViewer = pannellum.viewer('panorama', {
+      type: 'equirectangular', panorama: currentEntry.photo360,
+      autoLoad: true, compass: true, showControls: true, mouseZoom: true,
+      hfov: 120, minHfov: 50, maxHfov: 120
+    });
+    pannellumViewer.on('load', () => hideLoadingSpinner('panorama'));
+    pannellumViewer.on('error', () => hideLoadingSpinner('panorama'));
+  }
+
+  setupCompare();
+  setupGallery();
+
+  const info = $('modalInfoContent');
+  info.innerHTML = `<strong>${currentEntry.description}</strong>`;
+  if (currentEntry.parking) info.innerHTML += `<br><span style="font-size:13px">🅿️ Парковка: ${currentEntry.parking}</span>`;
+  $('modalInfoTags').innerHTML = currentEntry.infrastructure.map(i => `<span class="info-tag">${i}</span>`).join('');
+
+  $('modal').classList.add('open');
+  $('modalInfo').classList.add('active');
+}
+
+function closeModal() {
+  $('modal').classList.remove('open');
+  if (pannellumViewer) { pannellumViewer.destroy(); pannellumViewer = null; }
+}
+
+function switchTab(tab, el) {
+  document.querySelectorAll('.modal-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.querySelectorAll('.viewer-360, .compare-container, .gallery-container').forEach(c => c.classList.remove('active'));
+  $('tab-' + tab).classList.add('active');
+  $('modalInfo').classList.toggle('active', tab === 'view360');
+}
+
+function setupCompare() {
+  const hasData = currentEntry.photo360 && currentEntry.renders?.length;
+  $('comparePlaceholder').style.display = hasData ? 'none' : 'flex';
+  ['compareBefore', 'compareAfter', 'compareSlider'].forEach(id => $(id).style.display = hasData ? 'block' : 'none');
+  if (hasData) {
+    $('compareBeforeImg').src = currentEntry.photo360;
+    $('compareAfterImg').src = currentEntry.renders[0];
+    initSlider();
+  }
+}
+
+let sliderCleanup = null;
+function initSlider() {
+  if (sliderCleanup) sliderCleanup();
+  const container = $('tab-compare'), slider = $('compareSlider'), after = $('compareAfter');
+  let dragging = false;
+  const update = x => {
+    const rect = container.getBoundingClientRect();
+    const pos = Math.max(0.05, Math.min(0.95, (x - rect.left) / rect.width));
+    slider.style.left = pos * 100 + '%';
+    after.style.clipPath = `inset(0 0 0 ${pos * 100}%)`;
+  };
+  const onDown = e => { dragging = true; e.preventDefault(); };
+  const onMouseMove = e => { if (dragging) update(e.clientX); };
+  const onTouchMove = e => { if (dragging) update(e.touches[0].clientX); };
+  const onUp = () => { dragging = false; };
+  slider.addEventListener('mousedown', onDown);
+  slider.addEventListener('touchstart', onDown);
+  container.addEventListener('mousemove', onMouseMove);
+  container.addEventListener('touchmove', onTouchMove);
+  document.addEventListener('mouseup', onUp);
+  document.addEventListener('touchend', onUp);
+  sliderCleanup = () => {
+    slider.removeEventListener('mousedown', onDown);
+    slider.removeEventListener('touchstart', onDown);
+    container.removeEventListener('mousemove', onMouseMove);
+    container.removeEventListener('touchmove', onTouchMove);
+    document.removeEventListener('mouseup', onUp);
+    document.removeEventListener('touchend', onUp);
+    sliderCleanup = null;
+  };
+}
+
+function setupGallery() {
+  const has = currentEntry.renders?.length;
+  $('galleryPlaceholder').style.display = has ? 'none' : 'flex';
+  const grid = $('galleryGrid');
+  grid.style.display = has ? 'grid' : 'none';
+  grid.innerHTML = has ? currentEntry.renders.map((r, i) => `
+    <div class="gallery-card" onclick="window.open('${r}','_blank')">
+      <img src="${r}" alt="Вариант ${i+1}">
+      <div class="gallery-card-info"><h4>Вариант ${i+1}</h4><p>Предлагаемое решение для ${currentEntry.name}</p></div>
+    </div>`).join('') : '';
+}
+
+function toggleSidebar() {
+  document.querySelector('.sidebar').classList.toggle('open');
+  document.querySelector('.sidebar-backdrop').classList.toggle('open');
+}
+
+function openViewpoint(photo, title) {
+  $('modalTitle').textContent = title;
+  switchTab('view360', document.querySelector('[data-tab="view360"]'));
+  if (pannellumViewer) { pannellumViewer.destroy(); pannellumViewer = null; }
+  $('placeholder360').style.display = 'none';
+  $('panorama').style.display = 'block';
+  showLoadingSpinner('panorama');
+  pannellumViewer = pannellum.viewer('panorama', {
+    type: 'equirectangular', panorama: photo,
+    autoLoad: true, compass: true, showControls: true, mouseZoom: true,
+    hfov: 120, minHfov: 50, maxHfov: 120
+  });
+  pannellumViewer.on('load', () => hideLoadingSpinner('panorama'));
+  pannellumViewer.on('error', () => hideLoadingSpinner('panorama'));
+  $('modalInfo').classList.remove('active');
+  $('modal').classList.add('open');
+}
+
+// Loading spinner helpers
+function showLoadingSpinner(containerId) {
+  hideLoadingSpinner(containerId); // remove any existing
+  const container = $(containerId);
+  const overlay = document.createElement('div');
+  overlay.className = 'loading-overlay';
+  overlay.id = containerId + '-loading';
+  overlay.innerHTML = `
+    <div class="spinner"></div>
+    <div class="loading-text">Загрузка 360° панорамы...</div>
+    <div class="loading-progress" id="${containerId}-progress"></div>
+  `;
+  container.style.position = 'relative';
+  container.appendChild(overlay);
+}
+
+function hideLoadingSpinner(containerId) {
+  const el = $(containerId + '-loading');
+  if (el) el.remove();
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeModal(); closeEditForm(); } });
+
+// ===== Edit Mode =====
+let editMode = false;
+let editingPoint = null; // null = new, otherwise existing point
+let editLatLng = null;
+let undoStack = [];
+
+function toggleEditMode() {
+  editMode = !editMode;
+  $('editToggle').classList.toggle('active', editMode);
+  $('editBanner').classList.toggle('visible', editMode);
+  $('exportBar').classList.toggle('visible', editMode);
+  $('drawToggle').style.display = editMode ? 'block' : 'none';
+  if (!editMode) { drawMode = false; $('drawBar').style.display = 'none'; clearDraw(); }
+  render(); // re-render markers with draggable option
+}
+
+function onMapClickEdit(e) {
+  if (drawMode) { onMapClickDraw(e); return; }
+  if (!editMode) return;
+  editLatLng = e.latlng;
+  editingPoint = null;
+  $('editFormTitle').textContent = 'Новая точка';
+  $('editCoords').textContent = `${e.latlng.lat.toFixed(6)}, ${e.latlng.lng.toFixed(6)}`;
+  $('editName').value = '';
+  $('editDesc').value = '';
+  $('editType').value = 'entry';
+  $('editParking').value = '';
+  $('editInfra').value = '';
+  $('editDeleteBtn').style.display = 'none';
+  $('editOverlay').classList.add('open');
+  $('editForm').classList.add('open');
+}
+
+function openEditForm(ep) {
+  editingPoint = ep;
+  editLatLng = { lat: ep.lat, lng: ep.lng };
+  $('editFormTitle').textContent = 'Редактировать: ' + ep.name;
+  $('editCoords').textContent = `${ep.lat.toFixed(6)}, ${ep.lng.toFixed(6)}`;
+  $('editName').value = ep.name;
+  $('editDesc').value = ep.description;
+  $('editType').value = ep.type === 'infrastructure' ? 'infrastructure' : ep.proposed ? 'proposed' : 'entry';
+  $('editParking').value = ep.parking || '';
+  $('editInfra').value = (ep.infrastructure || []).join(', ');
+  $('editDeleteBtn').style.display = 'block';
+  $('editOverlay').classList.add('open');
+  $('editForm').classList.add('open');
+}
+
+function closeEditForm() {
+  $('editOverlay').classList.remove('open');
+  $('editForm').classList.remove('open');
+  editingPoint = null;
+  editLatLng = null;
+}
+
+function saveEditForm() {
+  undoStack.push(JSON.parse(JSON.stringify(entryPoints)));
+  const name = $('editName').value.trim() || 'Без названия';
+  const desc = $('editDesc').value.trim();
+  const type = $('editType').value;
+  const parking = $('editParking').value.trim();
+  const infra = $('editInfra').value.split(',').map(s => s.trim()).filter(Boolean);
+
+  if (editingPoint) {
+    // Update existing
+    editingPoint.name = name;
+    editingPoint.description = desc;
+    editingPoint.parking = parking;
+    editingPoint.infrastructure = infra;
+    editingPoint.lat = editLatLng.lat;
+    editingPoint.lng = editLatLng.lng;
+    editingPoint.proposed = type === 'proposed';
+    editingPoint.type = type === 'infrastructure' ? 'infrastructure' : undefined;
+  } else {
+    // New point
+    const maxId = entryPoints.reduce((max, ep) => {
+      const n = parseInt(ep.id);
+      return isNaN(n) ? max : Math.max(max, n);
+    }, 0);
+    const newId = type === 'infrastructure' ? name.substring(0, 2) : maxId + 1;
+
+    entryPoints.push({
+      id: newId,
+      name,
+      description: desc,
+      lat: editLatLng.lat,
+      lng: editLatLng.lng,
+      parking,
+      infrastructure: infra,
+      photo360: null,
+      renders: [],
+      proposed: type === 'proposed',
+      type: type === 'infrastructure' ? 'infrastructure' : undefined
+    });
+  }
+
+  closeEditForm();
+  render();
+}
+
+function deleteEditPoint() {
+  if (!editingPoint) return;
+  if (!confirm(`Удалить "${editingPoint.name}"?`)) return;
+  undoStack.push(JSON.parse(JSON.stringify(entryPoints)));
+  entryPoints = entryPoints.filter(ep => ep !== editingPoint);
+  closeEditForm();
+  render();
+}
+
+function undoLastChange() {
+  if (!undoStack.length) return;
+  entryPoints = undoStack.pop();
+  render();
+}
+
+// ===== Legend =====
+const legendCategories = [
+  { section: 'Дороги и тропы', items: [
+    { key: 'highway=path', label: 'Тропинки', color: '#8B4513', style: 'dashed', count: 1998, query: 'way[highway=path]' },
+    { key: 'highway=footway', label: 'Пешеходные дорожки', color: '#FA8072', style: 'dashed', count: 1099, query: 'way[highway=footway]' },
+    { key: 'highway=track', label: 'Грунтовые дороги', color: '#A0522D', style: 'solid', count: 131, query: 'way[highway=track]' },
+    { key: 'highway=steps', label: 'Лестницы', color: '#FF6347', style: 'dotted', count: 90, query: 'way[highway=steps]' },
+    { key: 'highway=cycleway', label: 'Велодорожки', color: '#0066FF', style: 'dashed', count: 14, query: 'way[highway=cycleway]' },
+    { key: 'highway=bridleway', label: 'Конные тропы', color: '#006400', style: 'dashed', count: 4, query: 'way[highway=bridleway]' },
+    { key: 'highway=service', label: 'Служебные дороги', color: '#999', style: 'solid', count: 646, query: 'way[highway=service]' },
+    { key: 'surface=asphalt_walk', label: 'Асфальтированные дорожки', color: '#333', style: 'solid', count: 590, query: 'way[highway=footway]', rawQuery: '(way(poly:"POLY")[highway~"footway|path|cycleway"][surface~"asphalt|paved|concrete"];)' },
+    { key: 'bridge=yes', label: 'Мосты', color: '#8B0000', style: 'solid', count: 126, query: 'way[bridge=yes]', rawQuery: '(way(poly:"POLY")[bridge=yes];way(poly:"POLY")[man_made=bridge];)' },
+  ]},
+  { section: 'Водотоки', items: [
+    { key: 'waterway=stream', label: 'Ручьи', color: '#4169E1', style: 'solid', count: 210, query: 'way[waterway=stream]' },
+    { key: 'waterway=river', label: 'Реки', color: '#1E90FF', style: 'solid', count: 36, query: 'way[waterway=river]' },
+    { key: 'waterway=drain', label: 'Дренаж', color: '#87CEEB', style: 'dashed', count: 15, query: 'way[waterway=drain]' },
+    { key: 'natural=spring', label: 'Родники', color: '#00CED1', style: 'circle', count: 13, query: 'node[natural=spring]' },
+    { key: 'natural=water', label: 'Водоёмы', color: '#4682B4', style: 'rect', count: 43, query: 'way[natural=water]' },
+    { key: 'natural=wetland', label: 'Болота', color: '#2E8B57', style: 'rect', count: 32, query: 'way[natural=wetland]' },
+  ]},
+  { section: 'Природа', items: [
+    { key: 'natural=grassland', label: 'Луга', color: '#90EE90', style: 'rect', count: 25, query: 'way[natural=grassland]' },
+    { key: 'natural=earth_bank', label: 'Обрывы/откосы', color: '#A0522D', style: 'solid', count: 124, query: 'way[natural=earth_bank]' },
+    { key: 'natural=gully', label: 'Овраги', color: '#8B4513', style: 'dashed', count: 14, query: 'way[natural=gully]' },
+  ]},
+  { section: 'Инфраструктура', items: [
+    { key: 'amenity=bench', label: 'Скамейки', color: '#D2691E', style: 'circle', count: 221, query: 'node[amenity=bench]' },
+    { key: 'amenity=parking', label: 'Парковки', color: '#0000CD', style: 'rect', count: 55, query: 'way[amenity=parking]' },
+    { key: 'amenity=shelter', label: 'Навесы', color: '#8B8682', style: 'circle', count: 33, query: 'node[amenity=shelter]' },
+    { key: 'amenity=toilets', label: 'Туалеты', color: '#800080', style: 'circle', count: 16, query: 'node[amenity=toilets]' },
+    { key: 'tourism=information', label: 'Информационные стенды', color: '#FF8C00', style: 'circle', count: 26, query: 'node[tourism=information]' },
+    { key: 'leisure=picnic_table', label: 'Пикник-столы', color: '#CD853F', style: 'circle', count: 28, query: 'node[leisure=picnic_table]' },
+  ]},
+  { section: 'Спорт и отдых', items: [
+    { key: 'leisure=pitch', label: 'Спортивные площадки', color: '#32CD32', style: 'rect', count: 69, query: 'way[leisure=pitch]' },
+    { key: 'leisure=playground', label: 'Детские площадки', color: '#FF69B4', style: 'rect', count: 56, query: 'way[leisure=playground]' },
+    { key: 'leisure=fitness_station', label: 'Фитнес-станции', color: '#FF4500', style: 'circle', count: 23, query: 'node[leisure=fitness_station]' },
+    { key: 'leisure=dog_park', label: 'Собачьи площадки', color: '#DAA520', style: 'rect', count: 7, query: 'way[leisure=dog_park]' },
+    { key: 'sport=equestrian', label: 'Конный спорт', color: '#8B4513', style: 'rect', count: 13, query: 'way[sport=equestrian]' },
+    { key: 'leisure=horse_riding', label: 'Конные прогулки', color: '#A0522D', style: 'rect', count: 5, query: 'way[leisure=horse_riding]' },
+  ]},
+  { section: 'Здания и сооружения', items: [
+    { key: 'building=yes', label: 'Здания', color: '#708090', style: 'rect', count: 637, query: 'way[building=yes]' },
+    { key: 'building=garages', label: 'Гаражи', color: '#A9A9A9', style: 'rect', count: 87, query: 'way[building=garages]' },
+    { key: 'barrier=fence', label: 'Заборы', color: '#696969', style: 'dashed', count: 195, query: 'way[barrier=fence]' },
+  ]},
+  { section: 'Инженерные сети', items: [
+    { key: 'man_made=cutline', label: 'Просеки (ЛЭП)', color: '#BDB76B', style: 'rect', count: 354, query: 'way[man_made=cutline]' },
+    { key: 'power=line', label: 'Линии электропередач', color: '#888', style: 'solid', count: 17, query: 'way[power=line]' },
+    { key: 'power=substation', label: 'Подстанции', color: '#555', style: 'rect', count: 14, query: 'way[power=substation]' },
+  ]},
+  { section: 'Культура и история', items: [
+    { key: 'historic=memorial', label: 'Мемориалы', color: '#8B0000', style: 'circle', count: 13, query: 'node[historic=memorial]' },
+    { key: 'historic=archaeological_site', label: 'Археология', color: '#A52A2A', style: 'circle', count: 12, query: 'node[historic=archaeological_site]' },
+    { key: 'tourism=viewpoint', label: 'Смотровые точки', color: '#FF6600', style: 'circle', count: 7, query: 'node[tourism=viewpoint]' },
+    { key: 'tourism=artwork', label: 'Арт-объекты', color: '#9932CC', style: 'circle', count: 11, query: 'node[tourism=artwork]' },
+  ]},
+];
+
+const legendLayers = {};
+const legendCache = {};
+const simplifiedPoly = parkParts[0].filter((_, i) => i % 10 === 0).map(p => p[0] + ' ' + p[1]).join(' ');
+
+function buildLegendPanel() {
+  const panel = document.getElementById('legendPanel');
+  let html = '<div style="font-weight:700;font-size:14px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center">Легенда (OSM)<span style="cursor:pointer;font-size:18px;color:#999" onclick="toggleLegend()">✕</span></div>';
+  legendCategories.forEach(cat => {
+    html += `<div class="legend-section"><div class="legend-section-title">${cat.section}</div>`;
+    cat.items.forEach(item => {
+      const swatchStyle = item.style === 'circle'
+        ? `class="legend-swatch circle" style="background:${item.color}"`
+        : item.style === 'rect'
+        ? `class="legend-swatch rect" style="background:${item.color}"`
+        : item.style === 'dashed'
+        ? `class="legend-swatch dashed" style="--sw-color:${item.color}"`
+        : item.style === 'dotted'
+        ? `class="legend-swatch dotted" style="--sw-color:${item.color}"`
+        : `class="legend-swatch" style="background:${item.color}"`;
+      html += `<div class="legend-item" data-key="${item.key}" onclick="toggleLegendLayer('${item.key}')">
+        <span ${swatchStyle}></span>
+        <span>${item.label}</span>
+        <span class="legend-count">${item.count}</span>
+      </div>`;
+    });
+    html += '</div>';
+  });
+  panel.innerHTML = html;
+}
+
+function toggleLegend() {
+  const panel = document.getElementById('legendPanel');
+  const btn = document.getElementById('legendBtn');
+  document.getElementById('skiPanel').classList.remove('open');
+  document.getElementById('skiBtn').classList.remove('active');
+  document.getElementById('transportPanel').classList.remove('open');
+  document.getElementById('transportBtn').classList.remove('active');
+  panel.classList.toggle('open');
+  btn.classList.toggle('active');
+}
+
+// ===== Transport Panel =====
+let metroLayer = null, busLayer = null, transportData = null;
+
+function toggleTransportPanel() {
+  const panel = document.getElementById('transportPanel');
+  const btn = document.getElementById('transportBtn');
+  document.getElementById('skiPanel').classList.remove('open');
+  document.getElementById('skiBtn').classList.remove('active');
+  document.getElementById('legendPanel').classList.remove('open');
+  document.getElementById('legendBtn').classList.remove('active');
+
+  if (!panel.classList.contains('open')) {
+    buildTransportPanel();
+  }
+  panel.classList.toggle('open');
+  btn.classList.toggle('active');
+}
+
+function buildTransportPanel() {
+  const panel = document.getElementById('transportPanel');
+  panel.innerHTML = `
+    <div style="font-weight:700;font-size:14px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center">
+      🚇 Транспортная доступность
+      <span style="cursor:pointer;font-size:18px;color:#999" onclick="toggleTransportPanel()">✕</span>
+    </div>
+    <div class="ski-trail-item" data-transport="metro" onclick="toggleMetro()">
+      <span class="ski-trail-color" style="background:#FF0000;border-radius:50%;width:16px;height:16px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:9px;font-weight:700">М</span>
+      <div><div class="ski-trail-name">Станции метро</div><div class="ski-trail-info">В радиусе парка</div></div>
+    </div>
+    <div class="ski-trail-item" data-transport="bus" onclick="toggleBusStops()">
+      <span class="ski-trail-color" style="background:#2c3e50;border-radius:4px;width:16px;height:16px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:8px;font-weight:700">А</span>
+      <div><div class="ski-trail-name">Автобусные остановки</div><div class="ski-trail-info">Рядом с входными группами</div></div>
+    </div>
+    <div style="font-weight:700;font-size:12px;margin:14px 0 8px;padding-top:10px;border-top:1px solid #eee;color:#666">🅿️ Парковки</div>
+    <div class="ski-trail-item" data-transport="parking-exist" onclick="toggleParkingExist()">
+      <span class="ski-trail-color" style="background:#3498db;border-radius:4px;width:16px;height:16px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:8px;font-weight:700">P</span>
+      <div><div class="ski-trail-name">Существующие парковки</div><div class="ski-trail-info">Действующие парковочные места</div></div>
+    </div>
+    <div class="ski-trail-item" data-transport="parking-project" onclick="toggleParkingProject()">
+      <span class="ski-trail-color" style="background:#e67e22;border-radius:4px;width:16px;height:16px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:8px;font-weight:700">P</span>
+      <div><div class="ski-trail-name">Проектируемые парковки</div><div class="ski-trail-info">Программа ДКР 2026</div></div>
+    </div>
+  `;
+}
+
+async function loadTransportData() {
+  if (!transportData) {
+    const resp = await fetch('transport.json');
+    transportData = await resp.json();
+  }
+  return transportData;
+}
+
+async function toggleMetro() {
+  const el = document.querySelector('[data-transport="metro"]');
+  if (metroLayer) {
+    map.removeLayer(metroLayer); metroLayer = null;
+    el?.classList.remove('active'); return;
+  }
+  el?.classList.add('active');
+  const data = await loadTransportData();
+  metroLayer = L.featureGroup();
+  (data.metro || []).forEach(m => {
+    const icon = L.divIcon({
+      className: '',
+      html: '<div style="width:22px;height:22px;border-radius:50%;background:#FF0000;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(255,0,0,0.4);border:2px solid #fff">М</div>',
+      iconSize: [22, 22], iconAnchor: [11, 11]
+    });
+    L.marker([m.lat, m.lng], { icon }).bindTooltip(m.name, { direction: 'top' }).addTo(metroLayer);
+  });
+  metroLayer.addTo(map);
+}
+
+async function toggleBusStops() {
+  const el = document.querySelector('[data-transport="bus"]');
+  if (busLayer) {
+    map.removeLayer(busLayer); busLayer = null;
+    el?.classList.remove('active'); return;
+  }
+  el?.classList.add('active');
+  const data = await loadTransportData();
+  busLayer = L.featureGroup();
+  const busIcon = L.divIcon({
+    className: '',
+    html: '<div style="width:16px;height:16px;border-radius:3px;background:#2c3e50;color:#fff;font-size:8px;font-weight:700;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,0.3)">А</div>',
+    iconSize: [16, 16], iconAnchor: [8, 8]
+  });
+  (data.bus_stops || []).forEach(b => {
+    L.marker([b.lat, b.lng], { icon: busIcon }).bindTooltip(b.name || 'Остановка', { direction: 'top' }).addTo(busLayer);
+  });
+  busLayer.addTo(map);
+}
+
+const parkingData = {
+  existing: [
+    { name: 'Р 145', vg: 'ВГ №1', count: 145, lat: 55.64790, lng: 37.57100 },
+    { name: 'Р 130', vg: 'ВГ №2', count: 130, lat: 55.63458, lng: 37.58280 },
+    { name: 'Р 166', vg: 'ВГ №3', count: 166, lat: 55.62187, lng: 37.58110 },
+    { name: 'Р 185', vg: 'ВГ №4', count: 185, lat: 55.61410, lng: 37.57820 },
+    { name: 'Р 83', vg: 'ВГ №5', count: 83, lat: 55.59620, lng: 37.58030 },
+    { name: 'Р 30', vg: 'ВГ №6', count: 30, lat: 55.58725, lng: 37.59670 },
+    { name: 'Р 154', vg: 'ВГ №8', count: 154, lat: 55.57050, lng: 37.56170 },
+    { name: 'Р 620', vg: 'ВГ №10', count: 620, lat: 55.58655, lng: 37.54690 },
+    { name: 'Р 183', vg: 'ВГ №11', count: 183, lat: 55.58900, lng: 37.54990 },
+    { name: 'Р 430', vg: 'ВГ №12', count: 430, lat: 55.59843, lng: 37.55840 },
+    { name: 'Р 226', vg: 'ВГ №13', count: 226, lat: 55.61239, lng: 37.55770 },
+    { name: 'Р 58', vg: 'Между ВГ №13–14', count: 58, lat: 55.61900, lng: 37.54540 },
+    { name: 'Р 121', vg: 'ВГ №14', count: 121, lat: 55.62674, lng: 37.54450 },
+    { name: 'Р 518', vg: 'ВГ №15', count: 518, lat: 55.63804, lng: 37.54650 },
+  ],
+  projected: [
+    { name: 'Р 200', vg: 'ВГ №7 (проект)', count: 200, lat: 55.58415, lng: 37.57940 },
+    { name: 'Р 200', vg: 'ВГ №8 (проект)', count: 200, lat: 55.57050, lng: 37.56170 },
+  ]
+};
+
+let parkingExistLayer = null;
+let parkingProjectLayer = null;
+
+function toggleParkingExist() {
+  const el = document.querySelector('[data-transport="parking-exist"]');
+  if (parkingExistLayer) {
+    map.removeLayer(parkingExistLayer); parkingExistLayer = null;
+    el?.classList.remove('active'); return;
+  }
+  el?.classList.add('active');
+  parkingExistLayer = L.featureGroup();
+  parkingData.existing.forEach(p => {
+    const icon = L.divIcon({
+      className: '',
+      html: `<div style="display:inline-block;background:#1a65a5;color:#fff;padding:4px 8px;border-radius:8px;font-size:13px;font-weight:800;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,0.4);border:2px solid #fff;line-height:1">P${p.count}</div>`,
+      iconAnchor: [0, 0]
+    });
+    L.marker([p.lat, p.lng], { icon, zIndexOffset: -100 }).bindTooltip(`${p.vg}: <b>${p.count} мест</b>`, { direction: 'top' }).addTo(parkingExistLayer);
+  });
+  parkingExistLayer.addTo(map);
+}
+
+function toggleParkingProject() {
+  const el = document.querySelector('[data-transport="parking-project"]');
+  if (parkingProjectLayer) {
+    map.removeLayer(parkingProjectLayer); parkingProjectLayer = null;
+    el?.classList.remove('active'); return;
+  }
+  el?.classList.add('active');
+  parkingProjectLayer = L.featureGroup();
+  parkingData.projected.forEach(p => {
+    const icon = L.divIcon({
+      className: '',
+      html: `<div style="display:inline-block;background:#d35400;color:#fff;padding:4px 8px;border-radius:8px;font-size:13px;font-weight:800;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,0.4);border:2px solid #fff;line-height:1">P${p.count}</div>`,
+      iconAnchor: [0, 0]
+    });
+    L.marker([p.lat, p.lng], { icon, zIndexOffset: -100 }).bindTooltip(`${p.vg}: <b>${p.count} мест</b> (проект)`, { direction: 'top' }).addTo(parkingProjectLayer);
+  });
+  parkingProjectLayer.addTo(map);
+}
+
+let osmLegendData = null;
+
+async function loadOsmLegend() {
+  if (!osmLegendData) {
+    const resp = await fetch('osm_legend.json');
+    osmLegendData = await resp.json();
+  }
+  return osmLegendData;
+}
+
+// Map legend keys to osm_legend.json keys
+const legendKeyMap = {
+  'highway=path': 'path', 'highway=footway': 'footway', 'highway=track': 'track',
+  'highway=steps': 'steps', 'highway=cycleway': 'cycleway', 'highway=bridleway': 'bridleway',
+  'highway=service': 'service', 'surface=asphalt_walk': 'asphalt', 'bridge=yes': 'bridge',
+  'waterway=stream': 'stream', 'waterway=river': 'river', 'waterway=drain': 'drain',
+  'natural=spring': 'spring', 'natural=water': 'water', 'natural=wetland': 'wetland',
+  'natural=grassland': 'grassland', 'natural=earth_bank': 'earth_bank', 'natural=gully': 'gully',
+  'amenity=bench': 'bench', 'amenity=parking': 'parking', 'amenity=shelter': 'shelter',
+  'amenity=toilets': 'toilets', 'tourism=information': 'information',
+  'leisure=picnic_table': 'picnic_table', 'leisure=pitch': 'pitch',
+  'leisure=playground': 'playground', 'leisure=fitness_station': 'fitness_station',
+  'leisure=dog_park': 'dog_park', 'sport=equestrian': 'equestrian',
+  'leisure=horse_riding': 'horse_riding',
+  'building=yes': 'building', 'building=garages': 'garages',
+  'barrier=fence': 'fence', 'man_made=cutline': 'cutline',
+  'power=line': 'power_line', 'power=substation': 'substation',
+  'historic=memorial': 'memorial', 'historic=archaeological_site': 'archaeological',
+  'tourism=viewpoint': 'viewpoint', 'tourism=artwork': 'artwork'
+};
+
+async function toggleLegendLayer(key) {
+  const item = legendCategories.flatMap(c => c.items).find(i => i.key === key);
+  if (!item) return;
+  const el = document.querySelector(`.legend-item[data-key="${key}"]`);
+
+  if (legendLayers[key]) {
+    map.removeLayer(legendLayers[key]);
+    delete legendLayers[key];
+    el?.classList.remove('active');
+    return;
+  }
+
+  el?.classList.add('active');
+  const data = await loadOsmLegend();
+  const osmKey = legendKeyMap[key] || key;
+  const features = data[osmKey] || [];
+
+  if (!features.length) { el?.classList.remove('active'); return; }
+
+  const layer = L.featureGroup();
+  features.forEach(coords => {
+    // Point (node): [lat, lng]
+    if (typeof coords[0] === 'number' && coords.length === 2) {
+      L.circleMarker(coords, {
+        radius: 5, color: item.color, fillColor: item.color,
+        fillOpacity: 0.7, weight: 1
+      }).addTo(layer);
+    }
+    // Polygon/area
+    else if (item.style === 'rect' && coords.length > 2) {
+      L.polygon(coords, { color: item.color, weight: 2, fillColor: item.color, fillOpacity: 0.25 }).addTo(layer);
+    }
+    // Polyline
+    else {
+      const dashArr = item.style === 'dashed' ? '6,4' : item.style === 'dotted' ? '2,4' : null;
+      L.polyline(coords, { color: item.color, weight: 3, opacity: 0.8, dashArray: dashArr }).addTo(layer);
+    }
+  });
+
+  layer.addTo(map);
+  legendLayers[key] = layer;
+}
+
+buildLegendPanel();
+
+// ===== Ski Trails Panel =====
+const skiTrails = [
+  { id: 'alfa', name: 'Лыжная трасса Альфа-Битца', color: '#FF00FF', segments: 56, query: '', info: 'Основная трасса парка' },
+  { id: 'anninskaya', name: '«Аннинская пятёрка» ДЮСШ №43', color: '#FF6600', segments: 11, query: '', info: 'Коньковый ход, классика' },
+  { id: 'burevestnik', name: 'Трасса СДЮШОР «Буревестник-ЮМ» (5 км)', color: '#00FF00', segments: 2, query: '', info: '5 км' },
+  { id: 'unnamed', name: 'Прочие лыжные трассы', color: '#CCCC00', segments: 103, query: '', info: 'Без названия' },
+  { id: 'sled', name: '🛷 Трассы для саней', color: '#FF3399', segments: 5, query: '', info: '' },
+];
+const skiLayers = {};
+const skiCache = {};
+
+function buildSkiPanel() {
+  const panel = document.getElementById('skiPanel');
+  let html = '<div style="font-weight:700;font-size:14px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center">⛷ Лыжные трассы<span style="cursor:pointer;font-size:18px;color:#999" onclick="toggleSkiPanel()">✕</span></div>';
+
+  skiTrails.forEach(t => {
+    html += `<div class="ski-trail-item" data-ski="${t.id}" onclick="toggleSkiTrail('${t.id}')">
+      <span class="ski-trail-color" style="background:${t.color}"></span>
+      <div>
+        <div class="ski-trail-name">${t.name}</div>
+        ${t.info ? `<div class="ski-trail-info">${t.info}</div>` : ''}
+      </div>
+      <span class="ski-trail-segments">${t.segments}</span>
+    </div>`;
+  });
+
+  html += '<button class="ski-show-all" id="skiShowAll" onclick="toggleAllSkiTrails()">Показать все трассы</button>';
+
+  // === ПРОЕКТИРУЕМЫЕ ПОКРЫТИЯ ===
+  html += '<div style="font-weight:700;font-size:13px;margin:16px 0 8px;padding-top:12px;border-top:2px solid #0088cc;color:#0088cc">📐 Проектируемые покрытия</div>';
+  html += `<div class="ski-trail-item" data-dxf="0_Борт проект_голубой" onclick="toggleDxfLayer('0_Борт проект_голубой', this)">
+    <span class="ski-trail-color" style="background:#00BFFF"></span>
+    <div><div class="ski-trail-name">Новое АБ покрытие</div><div class="ski-trail-info">14,7 км</div></div>
+  </div>`;
+  html += `<div class="ski-trail-item" data-dxf="0_Борт проект" onclick="toggleDxfLayer('0_Борт проект', this)">
+    <span class="ski-trail-color" style="background:#0000FF"></span>
+    <div><div class="ski-trail-name">Ремонтируемое АБ покрытие</div><div class="ski-trail-info">11,5 км</div></div>
+  </div>`;
+  html += `<div class="ski-trail-item" data-dxf="0_Щебень" onclick="toggleDxfLayer('0_Щебень', this)">
+    <span class="ski-trail-color" style="background:#FF0000"></span>
+    <div><div class="ski-trail-name">Покрытие из гранитного отсева</div><div class="ski-trail-info">22,1 км</div></div>
+  </div>`;
+  html += `<div class="ski-trail-item" data-dxf="0_грунт трасса" onclick="toggleDxfLayer('0_грунт трасса', this)">
+    <span class="ski-trail-color" style="background:#00CC00"></span>
+    <div><div class="ski-trail-name">Трассы по грунтовому покрытию</div><div class="ski-trail-info">71,8 км</div></div>
+  </div>`;
+  html += `<div class="ski-trail-item" data-dxf="0_трасса щепа" onclick="toggleDxfLayer('0_трасса щепа', this)">
+    <span class="ski-trail-color" style="background:#8B8B00"></span>
+    <div><div class="ski-trail-name">Трассы из щепы</div></div>
+  </div>`;
+  // Скрыто: нарисованные вручную трассы (для внутреннего использования)
+  // html += `<div class="ski-trail-item" data-ski="projected" onclick="toggleProjectedTrails()">
+  //   <span class="ski-trail-color" style="background:#00bfff;border:2px dashed #0088cc"></span>
+  //   <div><div class="ski-trail-name">Нарисованные вручную</div><div class="ski-trail-info">Новое АБ покрытие (3 трассы)</div></div>
+  // </div>`;
+  // Кнопка "все покрытия" удалена
+
+  // === ИНФРАСТРУКТУРА ДЛЯ ТРАСС ===
+  html += '<div style="font-weight:700;font-size:13px;margin:16px 0 8px;padding-top:12px;border-top:2px solid #e67e22;color:#e67e22">🏗 Инфраструктура для трасс</div>';
+  html += `<div class="ski-trail-item" data-ski="lighting" onclick="toggleLighting()">
+    <span class="ski-trail-color" style="background:#ffd700;font-size:10px;display:flex;align-items:center;justify-content:center">💡</span>
+    <div><div class="ski-trail-name">Проектируемое освещение</div><div class="ski-trail-info">Фонари вдоль трасс</div></div>
+  </div>`;
+  html += `<div class="ski-trail-item" data-ski="snowflakes" onclick="toggleSnowflakes()">
+    <span class="ski-trail-color" style="font-size:12px;display:flex;align-items:center;justify-content:center">❄️</span>
+    <div><div class="ski-trail-name">Проектируемое оснежение</div><div class="ski-trail-info">Точки оснежения трасс</div></div>
+  </div>`;
+  html += `<div class="ski-trail-item" data-ski="snow-platforms" onclick="toggleSnowPlatforms()">
+    <span class="ski-trail-color" style="font-size:12px;display:flex;align-items:center;justify-content:center">🏔</span>
+    <div><div class="ski-trail-name">Площадки оснежения</div><div class="ski-trail-info">4 площадки у входных групп</div></div>
+  </div>`;
+
+  // === СУЩЕСТВУЮЩАЯ ИНФРАСТРУКТУРА ===
+  html += '<div style="font-weight:700;font-size:13px;margin:16px 0 8px;padding-top:12px;border-top:2px solid #999;color:#666">📋 Существующая инфраструктура</div>';
+  html += `<div class="ski-trail-item" data-dxf="0_сущ покрытие" onclick="toggleDxfLayer('0_сущ покрытие', this)">
+    <span class="ski-trail-color" style="background:#999"></span>
+    <div><div class="ski-trail-name">Существующая ДТС под трассы</div><div class="ski-trail-info">а/б 11,2км, щебень 5,5км, грунт 5,7км</div></div>
+  </div>`;
+  html += `<div class="ski-trail-item" data-ski="existingLight" onclick="toggleExistingLight()">
+    <span class="ski-trail-color" style="background:#FFA500;font-size:10px;display:flex;align-items:center;justify-content:center">💡</span>
+    <div><div class="ski-trail-name">Существующее освещение</div><div class="ski-trail-info">181 опора</div></div>
+  </div>`;
+  // Рисование скрыто
+  html += `<div id="overlayControls" style="display:none;margin-top:6px">
+    <div style="font-size:11px;color:#888">Прозрачность: <input type="range" min="5" max="95" value="50" oninput="setPlanOpacity(this.value)" style="width:100px;vertical-align:middle"></div>
+    <div style="font-size:10px;margin-top:4px;display:flex;gap:3px;flex-wrap:wrap">
+      <button onclick="nudgeOverlay('up')" style="padding:3px 6px;border:1px solid #ccc;border-radius:4px;cursor:pointer;font-size:10px">↑</button>
+      <button onclick="nudgeOverlay('down')" style="padding:3px 6px;border:1px solid #ccc;border-radius:4px;cursor:pointer;font-size:10px">↓</button>
+      <button onclick="nudgeOverlay('left')" style="padding:3px 6px;border:1px solid #ccc;border-radius:4px;cursor:pointer;font-size:10px">←</button>
+      <button onclick="nudgeOverlay('right')" style="padding:3px 6px;border:1px solid #ccc;border-radius:4px;cursor:pointer;font-size:10px">→</button>
+      <button onclick="nudgeOverlay('bigger')" style="padding:3px 6px;border:1px solid #ccc;border-radius:4px;cursor:pointer;font-size:10px">+</button>
+      <button onclick="nudgeOverlay('smaller')" style="padding:3px 6px;border:1px solid #ccc;border-radius:4px;cursor:pointer;font-size:10px">−</button>
+    </div>
+    <div style="font-size:10px;margin-top:4px;display:flex;gap:3px;align-items:center">
+      <span style="color:#888">Поворот:</span>
+      <button onclick="rotateOverlay(-5)" style="padding:3px 6px;border:1px solid #ccc;border-radius:4px;cursor:pointer;font-size:10px">-5°</button>
+      <button onclick="rotateOverlay(-1)" style="padding:3px 6px;border:1px solid #ccc;border-radius:4px;cursor:pointer;font-size:10px">-1°</button>
+      <button onclick="rotateOverlay(-0.2)" style="padding:3px 6px;border:1px solid #ccc;border-radius:4px;cursor:pointer;font-size:10px">-0.2°</button>
+      <span id="rotationAngle" style="color:#8e44ad;font-weight:bold;min-width:30px;text-align:center">0°</span>
+      <button onclick="rotateOverlay(0.2)" style="padding:3px 6px;border:1px solid #ccc;border-radius:4px;cursor:pointer;font-size:10px">+0.2°</button>
+      <button onclick="rotateOverlay(1)" style="padding:3px 6px;border:1px solid #ccc;border-radius:4px;cursor:pointer;font-size:10px">+1°</button>
+      <button onclick="rotateOverlay(5)" style="padding:3px 6px;border:1px solid #ccc;border-radius:4px;cursor:pointer;font-size:10px">+5°</button>
+    </div>
+    <button class="ski-show-all" style="background:#27ae60;margin-top:4px;padding:6px 10px;font-size:11px" onclick="saveOverlayBounds()">💾 Сохранить привязку</button>
+    <button class="ski-show-all" style="background:#e67e22;margin-top:4px;padding:6px 10px;font-size:11px" onclick="resetOverlayBounds()">🔓 Разблокировать углы</button>
+  </div>`;
+
+  panel.innerHTML = html;
+}
+
+// ===== Projected Trails & Lighting =====
+let projectedTrailsData = null;
+let projectedLayer = null;
+let lightingLayer = null;
+let trailDrawMode = false;
+let trailDrawPoints = [];
+let trailDrawMarkers = [];
+let trailDrawLine = null;
+let drawnTrails = [];
+let drawnTrailsLayer = L.featureGroup();
+
+async function loadProjectedTrails() {
+  if (projectedTrailsData) return projectedTrailsData;
+  try {
+    const resp = await fetch('projected_trails.json?v=' + Date.now());
+    projectedTrailsData = await resp.json();
+  } catch(e) { projectedTrailsData = { trails: [], lighting: [] }; }
+  return projectedTrailsData;
+}
+
+// ===== DXF Trails =====
+let dxfData = null;
+const dxfLayers = {};
+const dxfColors = {
+  '0_грунт трасса': '#8B00FF',
+  '0_сущ покрытие': '#999999',
+  '0_Щебень': '#FF0000',
+  '0_Борт проект': '#0000FF',
+  '0_Борт проект_голубой': '#00BFFF',
+  '0_трасса щепа': '#8B8B00',
+};
+
+async function loadDxfData() {
+  if (dxfData) return dxfData;
+  try {
+    const resp = await fetch('dxf_trails.json?v=' + Date.now());
+    dxfData = await resp.json();
+  } catch(e) { dxfData = { trails: [] }; }
+  return dxfData;
+}
+
+async function toggleDxfLayer(layerName, el) {
+  const btn = el || document.querySelector(`[data-dxf="${layerName}"]`);
+  if (dxfLayers[layerName]) {
+    map.removeLayer(dxfLayers[layerName]);
+    delete dxfLayers[layerName];
+    if (btn) { btn.style.background = ''; btn.style.boxShadow = ''; }
+    return;
+  }
+  const data = await loadDxfData();
+  const trails = data.trails.filter(t => t.layer === layerName);
+  const group = L.layerGroup();
+  trails.forEach(t => {
+    if (t.points.length >= 2) {
+      L.polyline(t.points, { color: dxfColors[layerName] || '#999', weight: 3, opacity: 0.85 }).addTo(group);
+    }
+  });
+  group.addTo(map);
+  dxfLayers[layerName] = group;
+  if (btn) { btn.style.background = '#e8f5e9'; btn.style.boxShadow = 'inset 0 0 0 2px ' + (dxfColors[layerName] || '#999'); }
+}
+
+async function toggleAllDxfLayers() {
+  try {
+    const allLayers = Object.keys(dxfColors);
+    const anyShown = allLayers.some(l => dxfLayers[l]);
+    const btn = document.querySelector('.ski-show-all[onclick*="toggleAllDxf"]');
+    if (anyShown) {
+      allLayers.forEach(l => {
+        if (dxfLayers[l]) { map.removeLayer(dxfLayers[l]); delete dxfLayers[l]; }
+        document.querySelector(`.ski-trail-item[data-dxf="${l}"]`)?.classList.remove('active');
+      });
+      if (btn) { btn.textContent = 'Показать все покрытия'; btn.style.background = '#0088cc'; }
+    } else {
+      if (!dxfTrailsData) {
+        const resp = await fetch('dxf_trails.json');
+        dxfTrailsData = await resp.json();
+      }
+      allLayers.forEach(l => {
+        if (dxfLayers[l]) return;
+        const layer = L.featureGroup();
+        dxfTrailsData.trails.filter(t => t.layer === l).forEach(t => {
+          L.polyline(t.points, { color: dxfColors[l], weight: 3, opacity: 0.8 }).addTo(layer);
+        });
+        layer.addTo(map);
+        dxfLayers[l] = layer;
+        document.querySelector(`.ski-trail-item[data-dxf="${l}"]`)?.classList.add('active');
+      });
+      if (btn) { btn.textContent = 'Скрыть все покрытия'; btn.style.background = '#c0392b'; }
+    }
+  } catch(e) { console.error('DXF toggle error:', e); }
+}
+
+async function toggleProjectedTrails() {
+  const el = document.querySelector('.ski-trail-item[data-ski="projected"]');
+  if (projectedLayer) {
+    map.removeLayer(projectedLayer);
+    projectedLayer = null;
+    el?.classList.remove('active');
+    return;
+  }
+  el?.classList.add('active');
+  const data = await loadProjectedTrails();
+  projectedLayer = L.featureGroup();
+  data.trails.forEach(trail => {
+    L.polyline(trail.points, {
+      color: trail.color || '#00bfff', weight: 4, opacity: 0.85, dashArray: '10, 6'
+    }).bindTooltip(trail.name, { sticky: true, direction: 'top' }).addTo(projectedLayer);
+  });
+  // Also show manually drawn trails
+  drawnTrails.forEach(t => {
+    L.polyline(t.points, {
+      color: '#00bfff', weight: 4, opacity: 0.85, dashArray: '10, 6'
+    }).bindTooltip(t.name, { sticky: true, direction: 'top' }).addTo(projectedLayer);
+  });
+  projectedLayer.addTo(map);
+}
+
+async function toggleLighting() {
+  const el = document.querySelector('.ski-trail-item[data-ski="lighting"]');
+  if (lightingLayer) {
+    map.removeLayer(lightingLayer);
+    lightingLayer = null;
+    el?.classList.remove('active');
+    return;
+  }
+  el?.classList.add('active');
+  lightingLayer = L.featureGroup();
+  const lightIcon = L.divIcon({
+    className: '',
+    html: '<div style="width:8px;height:8px;border-radius:50%;background:#FFD700;box-shadow:0 0 6px 3px rgba(255,215,0,0.6)"></div>',
+    iconSize: [8, 8], iconAnchor: [4, 4]
+  });
+  try {
+    const resp = await fetch('projected_light.json');
+    const lightData = await resp.json();
+    lightData.points.forEach(pt => {
+      L.marker([pt.lat, pt.lng], { icon: lightIcon })
+        .bindTooltip('Проектируемое освещение', { direction: 'top' }).addTo(lightingLayer);
+    });
+  } catch(e) { console.error('Light load error:', e); }
+  lightingLayer.addTo(map);
+}
+
+let snowflakeLayer = null;
+async function toggleSnowflakes() {
+  const el = document.querySelector('.ski-trail-item[data-ski="snowflakes"]');
+  if (snowflakeLayer) {
+    map.removeLayer(snowflakeLayer);
+    snowflakeLayer = null;
+    el?.classList.remove('active');
+    return;
+  }
+  el?.classList.add('active');
+  snowflakeLayer = L.featureGroup();
+  const snowIcon = L.divIcon({
+    className: '',
+    html: '<div style="width:8px;height:8px;border-radius:50%;background:#00BFFF;box-shadow:0 0 6px 3px rgba(0,191,255,0.5)"></div>',
+    iconSize: [8, 8], iconAnchor: [4, 4]
+  });
+  try {
+    const resp = await fetch('projected_snow.json');
+    const data = await resp.json();
+    (data.points || []).forEach(pt => {
+      L.marker([pt.lat, pt.lng], { icon: snowIcon }).addTo(snowflakeLayer);
+    });
+  } catch(e) { console.error(e); }
+  snowflakeLayer.addTo(map);
+}
+
+let snowPlatformLayer = null;
+function toggleSnowPlatforms() {
+  const el = document.querySelector('.ski-trail-item[data-ski="snow-platforms"]');
+  if (snowPlatformLayer) {
+    map.removeLayer(snowPlatformLayer); snowPlatformLayer = null;
+    el?.classList.remove('active'); return;
+  }
+  el?.classList.add('active');
+  snowPlatformLayer = L.featureGroup();
+  const platforms = [
+    { name: 'Площадка оснежения у ВГ №2', lat: 55.63425, lng: 37.58534 },
+    { name: 'Площадка оснежения у ВГ №15', lat: 55.63657, lng: 37.54955 },
+    { name: 'Площадка оснежения у ВГ №7', lat: 55.58348, lng: 37.56966 },
+    { name: 'Площадка оснежения у ВГ №8', lat: 55.57056, lng: 37.55193 },
+  ];
+  platforms.forEach(p => {
+    const icon = L.divIcon({
+      className: '',
+      html: '<div style="width:28px;height:28px;border-radius:50%;background:rgba(0,191,255,0.2);border:3px solid #00BFFF;display:flex;align-items:center;justify-content:center;font-size:16px;box-shadow:0 0 8px rgba(0,191,255,0.4)">❄️</div>',
+      iconSize: [24, 24], iconAnchor: [12, 12]
+    });
+    L.marker([p.lat, p.lng], { icon }).bindTooltip(p.name, { direction: 'top' }).addTo(snowPlatformLayer);
+  });
+  snowPlatformLayer.addTo(map);
+}
+
+let existingLightLayer = null;
+async function toggleExistingLight() {
+  const el = document.querySelector('.ski-trail-item[data-ski="existingLight"]');
+  if (existingLightLayer) {
+    map.removeLayer(existingLightLayer);
+    existingLightLayer = null;
+    el?.classList.remove('active');
+    return;
+  }
+  el?.classList.add('active');
+  existingLightLayer = L.featureGroup();
+  const icon = L.divIcon({
+    className: '',
+    html: '<div style="width:8px;height:8px;border-radius:50%;background:#FFA500;box-shadow:0 0 5px 2px rgba(255,165,0,0.5)"></div>',
+    iconSize: [8, 8], iconAnchor: [4, 4]
+  });
+  try {
+    const resp = await fetch('existing_light.json');
+    const data = await resp.json();
+    (data.points || []).forEach(pt => {
+      L.marker([pt.lat, pt.lng], { icon: icon }).addTo(existingLightLayer);
+    });
+  } catch(e) { console.error(e); }
+  existingLightLayer.addTo(map);
+}
+
+// ===== Zone Sections — Loro Piana + McKinsey =====
+let zonePolygons = {};
+let zoneTooltips = {};
+let activeZone = null;
+let zonesVisible = true;
+
+const zoneData = {
+  1: {
+    title: 'I участок',
+    subtitle: 'Верхняя часть Битцевского леса',
+    budget: '2,350',
+    file: 'zone1.json',
+    color: '#C5A55A',
+    accent: '#8B7332',
+    bg: '#FAF7F0',
+    gradient: 'linear-gradient(135deg, #8B7332 0%, #C5A55A 100%)',
+    stats: {
+      infrastructure: [
+        { icon: '🚪', value: '7', label: 'Входных групп' },
+        { icon: '☕', value: '3', label: 'Кафе' },
+        { icon: '🏗', value: '1', label: 'Гараж для техники' },
+        { icon: '⛸', value: '2', label: 'Катка с АБК' },
+        { icon: '🅿️', value: '1 549', label: 'Парковочных мест' },
+      ],
+      trails: [
+        { color: '#00BFFF', name: 'Новое устройство АБ покрытия', value: '6,0 км' },
+        { color: '#0000FF', name: 'Ремонт АБ покрытия', value: '3,2 км' },
+        { color: '#FF0000', name: 'Покрытие из гранитного отсева', value: '10,0 км' },
+      ],
+      engineering: [
+        { icon: '❄️', value: '9,2 км', label: 'Оснежение трасс' },
+        { icon: '💡', value: '6,9 км', label: 'Устраиваемое освещение' },
+      ],
+      machinery: [
+        { icon: '🚜', value: '1', label: 'Ратрак' },
+        { icon: '🏔', value: '2', label: 'Снегохода' },
+        { icon: '🏍', value: '2', label: 'Квадроцикла' },
+      ]
+    }
+  },
+  2: {
+    title: 'II участок',
+    subtitle: 'Нижняя часть Битцевского леса',
+    budget: '1,017',
+    file: 'zone2.json',
+    color: '#A8A9AD',
+    accent: '#6B6C70',
+    bg: '#F5F5F7',
+    gradient: 'linear-gradient(135deg, #6B6C70 0%, #A8A9AD 100%)',
+    stats: {
+      infrastructure: [
+        { icon: '🚪', value: '5', label: 'Входных групп' },
+        { icon: '☕', value: '1', label: 'Кафе' },
+        { icon: '🏗', value: '1', label: 'Гараж для техники' },
+        { icon: '🏢', value: '1', label: 'АБК' },
+        { icon: '🅿️', value: '926', label: 'Парковочных мест' },
+        { icon: '🆕', value: '200', label: 'Из них устраиваемые' },
+      ],
+      trails: [
+        { color: '#00BFFF', name: 'Новое устройство АБ покрытия', value: '1,25 км' },
+        { color: '#0000FF', name: 'Ремонт АБ покрытия', value: '5,15 км' },
+        { color: '#FF0000', name: 'Покрытие из гранитного отсева', value: '6,6 км' },
+      ],
+      engineering: [
+        { icon: '❄️', value: '7,3 км', label: 'Оснежение трасс' },
+        { icon: '💡', value: '7,3 км', label: 'Устраиваемое освещение' },
+      ],
+      machinery: [
+        { icon: '🚜', value: '1', label: 'Ратрак' },
+        { icon: '🏔', value: '2', label: 'Снегохода' },
+        { icon: '🏍', value: '2', label: 'Квадроцикла' },
+      ]
+    }
+  },
+  3: {
+    title: 'III участок',
+    subtitle: 'За МКАД и Бутовский лесопарк',
+    budget: '1,585',
+    file: 'zone3.json',
+    color: '#B08D57',
+    accent: '#7A6234',
+    bg: '#F7F3EC',
+    gradient: 'linear-gradient(135deg, #7A6234 0%, #B08D57 100%)',
+    stats: {
+      infrastructure: [
+        { icon: '🚪', value: '3', label: 'Входных групп' },
+        { icon: '☕', value: '2', label: 'Кафе' },
+        { icon: '🏗', value: '3', label: 'Гаража для техники' },
+        { icon: '🏢', value: '1', label: 'АБК' },
+        { icon: '🅿️', value: '974', label: 'Парковочных мест' },
+        { icon: '🆕', value: '200', label: 'Из них устраиваемые' },
+      ],
+      trails: [
+        { color: '#00BFFF', name: 'Новое устройство АБ покрытия', value: '7,5 км' },
+        { color: '#0000FF', name: 'Ремонт АБ покрытия', value: '3,7 км' },
+        { color: '#FF0000', name: 'Покрытие из гранитного отсева', value: '2,9 км' },
+      ],
+      engineering: [
+        { icon: '❄️', value: '7,1 км', label: 'Оснежение трасс' },
+        { icon: '💡', value: '10,4 км', label: 'Устраиваемое освещение' },
+      ],
+      machinery: [
+        { icon: '🚜', value: '3', label: 'Ратрака' },
+        { icon: '🏔', value: '6', label: 'Снегоходов' },
+        { icon: '🏍', value: '6', label: 'Квадроциклов' },
+      ]
+    }
+  }
+};
+
+// Show all zone overlays on map load
+// Zones are now toggled via buttons — no auto-init
+
+async function toggleZone(num) {
+  const btn = document.querySelector(`.zone-btn[data-zone="${num}"]`);
+  const zone = zoneData[num];
+
+  // Toggle off — remove polygon and tab
+  if (zonePolygons[num]) {
+    map.removeLayer(zonePolygons[num]);
+    delete zonePolygons[num];
+    btn.classList.remove('active');
+    removeZoneTab(num);
+    // If no zones open, switch to entries tab
+    if (!Object.keys(zonePolygons).length) {
+      switchSidebarTab('entries');
+    } else {
+      // Switch to last open zone tab
+      const lastZone = Object.keys(zonePolygons).pop();
+      switchSidebarTab('zone-' + lastZone);
+    }
+    return;
+  }
+
+  // Create polygon
+  btn.classList.add('active');
+
+  if (zone.file) {
+    try {
+      const resp = await fetch(zone.file);
+      const coords = await resp.json();
+      const poly = L.polygon(coords, {
+        color: zone.color, weight: 3, fillColor: zone.color, fillOpacity: 0.35,
+        interactive: true, className: 'zone-polygon'
+      }).addTo(map);
+
+      // Tooltip — disappears after 3 sec
+      poly.bindTooltip(`<div style="font-weight:800;font-size:14px;color:#1a1a1a">${zone.title}</div><div style="font-size:10px;color:#555">${zone.budget !== '—' ? zone.budget + ' млрд ₽' : ''}</div>`, {
+        permanent: true, direction: 'center', className: 'zone-tooltip',
+        interactive: false
+      });
+      setTimeout(() => { if (zonePolygons[num]) poly.closeTooltip(); }, 3000);
+
+      zonePolygons[num] = poly;
+      map.fitBounds(poly.getBounds(), { padding: [60, 60] });
+
+      // Add tab and switch to it
+      addZoneTab(num);
+      switchSidebarTab('zone-' + num);
+    } catch(e) { console.error(e); }
+  }
+}
+
+function addZoneTab(num) {
+  const tabs = document.getElementById('sidebarTabs');
+  const zone = zoneData[num];
+  // Don't add duplicate
+  if (tabs.querySelector(`[data-tab="zone-${num}"]`)) return;
+  const tab = document.createElement('div');
+  tab.className = 'sidebar-tab';
+  tab.dataset.tab = 'zone-' + num;
+  tab.innerHTML = `<span onclick="switchSidebarTab('zone-${num}')" style="cursor:pointer;color:${zone.color};font-weight:800">${zone.title}</span><button class="tab-close" onclick="event.stopPropagation();closeZoneTab(${num})">✕</button>`;
+  tabs.appendChild(tab);
+}
+
+function removeZoneTab(num) {
+  const tab = document.querySelector(`[data-tab="zone-${num}"]`);
+  if (tab) tab.remove();
+}
+
+function closeZoneTab(num) {
+  // Remove polygon
+  if (zonePolygons[num]) {
+    map.removeLayer(zonePolygons[num]);
+    delete zonePolygons[num];
+  }
+  document.querySelector(`.zone-btn[data-zone="${num}"]`)?.classList.remove('active');
+  removeZoneTab(num);
+  // Always switch to entries when closing a tab
+  const remaining = Object.keys(zonePolygons);
+  if (remaining.length === 0) {
+    switchSidebarTab('entries');
+  } else {
+    switchSidebarTab('zone-' + remaining[remaining.length - 1]);
+  }
+}
+
+function switchSidebarTab(tabId) {
+  // Update tab styles
+  document.querySelectorAll('.sidebar-tab').forEach(t => t.classList.remove('active'));
+  const activeTab = document.querySelector(`[data-tab="${tabId}"]`);
+  if (activeTab) activeTab.classList.add('active');
+
+  const entryList = document.getElementById('entryList');
+  const filters = document.getElementById('sidebarFilters');
+
+  if (tabId === 'entries') {
+    // Show original entry list
+    filters.style.display = 'flex';
+    if (originalSidebarHtml) {
+      entryList.innerHTML = originalSidebarHtml;
+    }
+  } else {
+    // Show zone info
+    filters.style.display = 'none';
+    const num = parseInt(tabId.replace('zone-', ''));
+    // Save entries if not saved
+    if (!originalSidebarHtml) {
+      originalSidebarHtml = entryList.innerHTML;
+    }
+    showZoneSidebar(num);
+  }
+}
+
+// Save sidebar HTML after entries loaded
+setTimeout(() => {
+  if (!originalSidebarHtml) {
+    originalSidebarHtml = document.getElementById('entryList')?.innerHTML;
+  }
+}, 1500);
+
+function showAllZones() {
+  // Restore all polygons
+  for (const [num, poly] of Object.entries(zonePolygons)) {
+    const el = poly.getElement();
+    if (el) {
+      el.style.transition = 'opacity 0.5s ease';
+      el.style.opacity = '1';
+    }
+    poly.openTooltip();
+  }
+
+  // Reset buttons
+  document.querySelectorAll('.zone-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('zoneBackBtn').style.display = 'none';
+  document.getElementById('zoneCard').style.display = 'none';
+  activeZone = null;
+
+  // Zoom to full park
+  map.setView([55.600, 37.555], 12);
+}
+
+function showZoneSidebar(num) {
+  const zone = zoneData[num];
+  const s = zone.stats;
+  const sidebar = document.getElementById('entryList');
+  const hasData = s.infrastructure.length > 0;
+
+  if (!hasData) {
+    sidebar.innerHTML = `<div style="padding:24px;text-align:center;color:#888;font-style:italic">Данные по участку формируются</div>`;
+    return;
+  }
+
+  let html = `<div style="padding:16px 20px;border-bottom:3px solid ${zone.color}">`;
+  html += `<div style="font-size:18px;font-weight:800;color:#1a1a1a">${zone.title}</div>`;
+  html += `<div style="font-size:11px;color:#888;letter-spacing:1px;margin-top:2px">${zone.subtitle.toUpperCase()}</div>`;
+  if (zone.budget !== '—') {
+    html += `<div style="font-size:28px;font-weight:800;color:${zone.accent};margin-top:10px">${zone.budget} <span style="font-size:14px;font-weight:400">млрд ₽</span></div>`;
+    html += `<div style="font-size:9px;color:#999;letter-spacing:2px;text-transform:uppercase">Бюджет участка</div>`;
+  }
+  html += '</div>';
+
+  // Trails
+  html += '<div style="padding:12px 20px;border-bottom:1px solid #eee">';
+  html += '<div style="font-size:10px;color:#999;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;font-weight:600">Проектируемые покрытия</div>';
+  s.trails.forEach(t => {
+    html += `<div style="display:flex;align-items:center;gap:8px;margin:6px 0;font-size:13px">
+      <span style="width:20px;height:4px;border-radius:2px;background:${t.color};flex-shrink:0"></span>
+      <span style="color:#333;flex:1">${t.name}</span>
+      <span style="font-weight:800;color:#1a1a1a">${t.value}</span>
+    </div>`;
+  });
+  html += '</div>';
+
+  // Engineering
+  html += '<div style="padding:12px 20px;border-bottom:1px solid #eee">';
+  html += '<div style="font-size:10px;color:#999;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;font-weight:600">Инженерные системы</div>';
+  s.engineering.forEach(e => {
+    html += `<div style="margin:6px 0;font-size:13px;color:#333">${e.icon} <b style="color:#1a1a1a">${e.value}</b> ${e.label}</div>`;
+  });
+  html += '</div>';
+
+  // Machinery
+  if (s.machinery?.length) {
+    html += '<div style="padding:12px 20px;border-bottom:1px solid #eee">';
+    html += '<div style="font-size:10px;color:#999;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;font-weight:600">Техника</div>';
+    s.machinery.forEach(m => {
+      html += `<div style="margin:4px 0;font-size:13px;color:#333">${m.icon} <b>${m.value}</b> ${m.label}</div>`;
+    });
+    html += '</div>';
+  }
+
+  // Infrastructure
+  html += '<div style="padding:12px 20px;border-bottom:1px solid #eee">';
+  html += '<div style="font-size:10px;color:#999;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;font-weight:600">Инфраструктура</div>';
+  s.infrastructure.forEach(i => {
+    html += `<div style="margin:4px 0;font-size:13px;color:#333">${i.icon} <b style="color:#1a1a1a">${i.value}</b> ${i.label}</div>`;
+  });
+  html += '</div>';
+
+  html += '<div style="padding:12px 20px;text-align:center;font-size:9px;color:#bbb;letter-spacing:1px">ГП «СПОРТ МОСКВЫ» · ДКР 2026</div>';
+
+  sidebar.innerHTML = html;
+}
+
+let originalSidebarHtml = null;
+
+function showZoneCard(num) {
+  const zone = zoneData[num];
+  const s = zone.stats;
+  const card = document.getElementById('zoneCard');
+  const inner = document.getElementById('zoneCardInner');
+
+  let infraHtml = s.infrastructure.map(i => `
+    <div class="zone-stat" style="background:${zone.bg}">
+      <div class="zone-stat-icon">${i.icon}</div>
+      <div class="zone-stat-value" style="color:${zone.accent}">${i.value}</div>
+      <div class="zone-stat-label">${i.label}</div>
+    </div>`).join('');
+
+  let trailHtml = s.trails.map(t => `
+    <div class="zone-trail-row" style="background:${zone.bg}">
+      <div class="zone-trail-color" style="background:${t.color}"></div>
+      <span class="zone-trail-name">${t.name}</span>
+      <span class="zone-trail-value" style="color:${zone.accent}">${t.value}</span>
+    </div>`).join('');
+
+  let engHtml = s.engineering.map(i => `
+    <div class="zone-stat" style="background:${zone.bg}">
+      <div class="zone-stat-icon">${i.icon}</div>
+      <div class="zone-stat-value" style="color:${zone.accent}">${i.value}</div>
+      <div class="zone-stat-label">${i.label}</div>
+    </div>`).join('');
+
+  const noData = !s.infrastructure.length && !s.trails.length;
+
+  inner.innerHTML = `
+    <div class="zone-header" style="${zone.gradient ? 'background:' + zone.gradient : ''}">
+      <button class="zone-close" onclick="closeZoneCard()">✕</button>
+      <h2>${zone.title}</h2>
+      <h3>${zone.subtitle}</h3>
+      ${zone.budget !== '—' ? `
+        <div class="zone-budget-label">Бюджет участка</div>
+        <div class="zone-budget">${zone.budget} млрд ₽</div>
+      ` : '<div style="margin-top:20px;opacity:0.7;font-size:14px;font-weight:300">Данные формируются</div>'}
+    </div>
+    <div class="zone-body">
+      ${noData ? '<p style="color:#aaa;text-align:center;padding:48px 0;font-size:14px;font-weight:300;letter-spacing:0.5px">Данные по участку формируются</p>' : `
+        <div class="zone-section-title">Инфраструктура</div>
+        <div class="zone-grid">${infraHtml}</div>
+
+        <div class="zone-section-title">Проектируемые покрытия</div>
+        <div class="zone-trails">${trailHtml}</div>
+
+        <div class="zone-section-title">Инженерные системы</div>
+        <div class="zone-grid" style="grid-template-columns:repeat(2,1fr)">${engHtml}</div>
+
+        ${s.machinery?.length ? `
+          <div class="zone-section-title">Техника</div>
+          <div class="zone-grid" style="grid-template-columns:repeat(3,1fr)">${s.machinery.map(m => `
+            <div class="zone-stat">
+              <div class="zone-stat-icon">${m.icon}</div>
+              <div class="zone-stat-value">${m.value}</div>
+              <div class="zone-stat-label">${m.label}</div>
+            </div>`).join('')}</div>
+        ` : ''}
+      `}
+    </div>
+    <div class="zone-footer">ГП «Спорт Москвы» · Программа ДКР 2026</div>`;
+
+  card.style.display = 'block';
+}
+
+function closeZoneCard() {
+  document.getElementById('zoneCard').style.display = 'none';
+}
+
+document.getElementById('zoneCard')?.addEventListener('click', function(e) {
+  if (e.target === this) closeZoneCard();
+});
+
+// ===== Plan Overlay =====
+let planOverlay = null;
+let overlayCorners = null;
+let overlayRotation = 0;
+let planImage = null; // original image
+let planCanvas = document.createElement('canvas');
+let planCtx = planCanvas.getContext('2d');
+
+function rotateOverlay(deg) {
+  if (!planOverlay || !planImage) return;
+  overlayRotation += deg;
+
+  // Recalculate canvas size for rotation
+  const rad = Math.abs(overlayRotation * Math.PI / 180);
+  const w = planImage.width;
+  const h = planImage.height;
+  const newW = Math.ceil(w * Math.cos(rad) + h * Math.sin(rad));
+  const newH = Math.ceil(w * Math.sin(rad) + h * Math.cos(rad));
+  planCanvas.width = newW;
+  planCanvas.height = newH;
+  planCtx.clearRect(0, 0, newW, newH);
+  planCtx.save();
+  planCtx.translate(newW / 2, newH / 2);
+  planCtx.rotate(overlayRotation * Math.PI / 180);
+  planCtx.drawImage(planImage, -w / 2, -h / 2);
+  planCtx.restore();
+
+  // Update overlay with rotated image
+  const dataUrl = planCanvas.toDataURL('image/png');
+  // Need to recreate overlay with new image but same center/scale
+  const bounds = planOverlay.getBounds();
+  const center = bounds.getCenter();
+  const latSpan = bounds.getNorth() - bounds.getSouth();
+  const lngSpan = bounds.getEast() - bounds.getWest();
+  // Adjust bounds proportionally to new canvas aspect ratio
+  const aspect = newW / newH;
+  const origAspect = w / h;
+  // Keep the same area coverage, adjust for rotation
+  const newLatSpan = latSpan;
+  const newLngSpan = newLatSpan * aspect * (latSpan / (lngSpan * origAspect / aspect || lngSpan));
+
+  map.removeLayer(planOverlay);
+  const sw = L.latLng(center.lat - newLatSpan / 2, center.lng - (newLatSpan * aspect * Math.cos(center.lat * Math.PI / 180)) / 2);
+  const ne = L.latLng(center.lat + newLatSpan / 2, center.lng + (newLatSpan * aspect * Math.cos(center.lat * Math.PI / 180)) / 2);
+
+  planOverlay = L.imageOverlay(dataUrl, L.latLngBounds(sw, ne), { opacity: planOverlay.options.opacity, interactive: false });
+  planOverlay.addTo(map);
+
+  if (overlayCorners) {
+    overlayCorners[0].setLatLng(sw);
+    overlayCorners[1].setLatLng(ne);
+  }
+
+  document.getElementById('rotationAngle').textContent = overlayRotation.toFixed(1) + '°';
+  return; // skip old CSS approach
+  const el = planOverlay.getElement();
+  if (el) {
+    el.style.transformOrigin = 'center center';
+    el.style.transform = `rotate(${overlayRotation}deg)`;
+  }
+  document.getElementById('rotationAngle').textContent = overlayRotation.toFixed(1) + '°';
+}
+
+function togglePlanOverlay() {
+  if (planOverlay) {
+    map.removeLayer(planOverlay);
+    if (overlayCorners) overlayCorners.forEach(m => map.removeLayer(m));
+    planOverlay = null;
+    overlayCorners = null;
+    document.getElementById('overlayControls').style.display = 'none';
+    return;
+  }
+
+  // Use saved bounds or defaults
+  let sw, ne;
+  if (savedOverlayBounds) {
+    sw = L.latLng(savedOverlayBounds.sw[0], savedOverlayBounds.sw[1]);
+    ne = L.latLng(savedOverlayBounds.ne[0], savedOverlayBounds.ne[1]);
+  } else {
+    sw = L.latLng(55.548, 37.475);
+    ne = L.latLng(55.652, 37.605);
+  }
+  const bounds = L.latLngBounds(sw, ne);
+
+  // Load image first, then create overlay
+  planImage = new Image();
+  planImage.onload = function() {
+    planOverlay = L.imageOverlay('plan_overlay.png', bounds, { opacity: 0.5, interactive: false });
+    planOverlay.addTo(map);
+    map.fitBounds(bounds);
+    document.getElementById('overlayControls').style.display = 'block';
+
+    // Restore rotation
+    if (savedOverlayBounds && savedOverlayBounds.rotation && savedOverlayBounds.rotation !== 0) {
+      overlayRotation = 0; // reset then apply
+      rotateOverlay(savedOverlayBounds.rotation);
+    } else {
+      overlayRotation = 0;
+      document.getElementById('rotationAngle').textContent = '0°';
+    }
+
+    // Add corner markers after overlay is ready
+    addCornerMarkers(bounds);
+  };
+  planImage.src = 'plan_overlay.png';
+  return; // rest handled in onload
+
+  // Handled in addCornerMarkers now
+}
+
+function addCornerMarkers(bounds) {
+  if (overlayCorners) overlayCorners.forEach(m => map.removeLayer(m));
+
+  const cornerIcon = L.divIcon({
+    className: '',
+    html: '<div style="width:14px;height:14px;border-radius:50%;background:#8e44ad;border:2px solid #fff;cursor:move"></div>',
+    iconSize: [14, 14], iconAnchor: [7, 7]
+  });
+
+  const sw = bounds.getSouthWest();
+  const ne = bounds.getNorthEast();
+  const swMarker = L.marker(sw, { icon: cornerIcon, draggable: true }).addTo(map);
+  const neMarker = L.marker(ne, { icon: cornerIcon, draggable: true }).addTo(map);
+
+  function updateOverlay() {
+    const newBounds = L.latLngBounds(swMarker.getLatLng(), neMarker.getLatLng());
+    planOverlay.setBounds(newBounds);
+  }
+
+  swMarker.on('drag', updateOverlay);
+  neMarker.on('drag', updateOverlay);
+
+  overlayCorners = [swMarker, neMarker];
+}
+
+function setPlanOpacity(val) {
+  if (planOverlay) planOverlay.setOpacity(val / 100);
+}
+
+let savedOverlayBounds = localStorage.getItem('overlayBounds') ? JSON.parse(localStorage.getItem('overlayBounds')) : null;
+
+function saveOverlayBounds() {
+  if (!overlayCorners && !planOverlay) return;
+  let sw, ne;
+  if (overlayCorners) {
+    sw = overlayCorners[0].getLatLng();
+    ne = overlayCorners[1].getLatLng();
+    overlayCorners.forEach(m => map.removeLayer(m));
+    overlayCorners = null;
+  } else {
+    const b = planOverlay.getBounds();
+    sw = b.getSouthWest();
+    ne = b.getNorthEast();
+  }
+  const bounds = { sw: [sw.lat, sw.lng], ne: [ne.lat, ne.lng], rotation: overlayRotation };
+  savedOverlayBounds = bounds;
+  localStorage.setItem('overlayBounds', JSON.stringify(bounds));
+  alert('Привязка сохранена!');
+}
+
+function resetOverlayBounds() {
+  if (!planOverlay) return;
+  const b = planOverlay.getBounds();
+  const sw = b.getSouthWest();
+  const ne = b.getNorthEast();
+
+  if (overlayCorners) {
+    overlayCorners.forEach(m => map.removeLayer(m));
+  }
+
+  const cornerIcon = L.divIcon({
+    className: '',
+    html: '<div style="width:14px;height:14px;border-radius:50%;background:#8e44ad;border:2px solid #fff;cursor:move"></div>',
+    iconSize: [14, 14], iconAnchor: [7, 7]
+  });
+
+  const swMarker = L.marker(sw, { icon: cornerIcon, draggable: true }).addTo(map);
+  const neMarker = L.marker(ne, { icon: cornerIcon, draggable: true }).addTo(map);
+
+  function updateOverlay() {
+    planOverlay.setBounds(L.latLngBounds(swMarker.getLatLng(), neMarker.getLatLng()));
+  }
+  swMarker.on('drag', updateOverlay);
+  neMarker.on('drag', updateOverlay);
+  overlayCorners = [swMarker, neMarker];
+}
+
+function nudgeOverlay(dir) {
+  if (!planOverlay) return;
+  const b = planOverlay.getBounds();
+  let sw = b.getSouthWest();
+  let ne = b.getNorthEast();
+  const step = 0.0003; // ~30m
+
+  switch(dir) {
+    case 'up':    sw = L.latLng(sw.lat + step, sw.lng); ne = L.latLng(ne.lat + step, ne.lng); break;
+    case 'down':  sw = L.latLng(sw.lat - step, sw.lng); ne = L.latLng(ne.lat - step, ne.lng); break;
+    case 'left':  sw = L.latLng(sw.lat, sw.lng - step); ne = L.latLng(ne.lat, ne.lng - step); break;
+    case 'right': sw = L.latLng(sw.lat, sw.lng + step); ne = L.latLng(ne.lat, ne.lng + step); break;
+    case 'bigger': {
+      const dlat = (ne.lat - sw.lat) * 0.02;
+      const dlng = (ne.lng - sw.lng) * 0.02;
+      sw = L.latLng(sw.lat - dlat, sw.lng - dlng);
+      ne = L.latLng(ne.lat + dlat, ne.lng + dlng);
+      break;
+    }
+    case 'smaller': {
+      const dlat = (ne.lat - sw.lat) * 0.02;
+      const dlng = (ne.lng - sw.lng) * 0.02;
+      sw = L.latLng(sw.lat + dlat, sw.lng + dlng);
+      ne = L.latLng(ne.lat - dlat, ne.lng - dlng);
+      break;
+    }
+  }
+  planOverlay.setBounds(L.latLngBounds(sw, ne));
+  if (overlayCorners) {
+    overlayCorners[0].setLatLng(sw);
+    overlayCorners[1].setLatLng(ne);
+  }
+}
+
+// ===== Draw Trail Mode =====
+function startDrawTrail() {
+  trailDrawMode = true;
+  trailDrawPoints = [];
+  trailDrawMarkers = [];
+  trailDrawLine = null;
+  map.getContainer().style.cursor = 'crosshair';
+
+  // Show draw bar
+  let bar = document.getElementById('trailDrawBar');
+  if (!bar) {
+    bar = document.createElement('div');
+    bar.id = 'trailDrawBar';
+    bar.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:10000;background:#fff;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,0.3);padding:12px 16px;display:flex;gap:10px;align-items:center';
+    document.body.appendChild(bar);
+  }
+  bar.style.display = 'flex';
+  bar.innerHTML = `
+    <span style="font-weight:700;font-size:13px;color:#0088cc">✏️ Рисуйте трассу — кликайте точки</span>
+    <button onclick="undoTrailPoint(event)" style="padding:6px 12px;background:#e74c3c;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px">↩ Отменить точку</button>
+    <button onclick="finishTrailDraw(event)" style="padding:6px 12px;background:#27ae60;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px">✓ Завершить трассу</button>
+    <button onclick="cancelTrailDraw(event)" style="padding:6px 12px;background:#888;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px">✕ Отмена</button>
+  `;
+
+  map.on('click', onTrailMapClick);
+}
+
+function onTrailMapClick(e) {
+  if (!trailDrawMode) return;
+  const pt = [e.latlng.lat, e.latlng.lng];
+  trailDrawPoints.push(pt);
+
+  const num = trailDrawPoints.length;
+  const icon = L.divIcon({
+    className: '',
+    html: `<div style="width:14px;height:14px;border-radius:50%;background:#00bfff;border:2px solid #006699;color:#fff;font-size:8px;display:flex;align-items:center;justify-content:center;font-weight:bold">${num}</div>`,
+    iconSize: [14, 14], iconAnchor: [7, 7]
+  });
+  const marker = L.marker(pt, { icon, draggable: true }).addTo(map);
+  marker._ptIndex = num - 1;
+  marker.on('drag', function(ev) {
+    const idx = this._ptIndex;
+    trailDrawPoints[idx] = [ev.latlng.lat, ev.latlng.lng];
+    updateTrailDrawLine();
+  });
+  trailDrawMarkers.push(marker);
+  updateTrailDrawLine();
+}
+
+function updateTrailDrawLine() {
+  if (trailDrawLine) map.removeLayer(trailDrawLine);
+  if (trailDrawPoints.length > 1) {
+    trailDrawLine = L.polyline(trailDrawPoints, {
+      color: '#00bfff', weight: 4, opacity: 0.85, dashArray: '10, 6'
+    }).addTo(map);
+  }
+}
+
+function undoTrailPoint(e) {
+  e?.stopPropagation();
+  if (trailDrawPoints.length === 0) return;
+  trailDrawPoints.pop();
+  const m = trailDrawMarkers.pop();
+  if (m) map.removeLayer(m);
+  updateTrailDrawLine();
+}
+
+function finishTrailDraw(e) {
+  e?.stopPropagation();
+  if (trailDrawPoints.length < 2) { alert('Нужно минимум 2 точки'); return; }
+
+  const name = prompt('Название трассы:', 'Проектируемая трасса ' + (drawnTrails.length + 1));
+  if (!name) return;
+
+  drawnTrails.push({ name, points: [...trailDrawPoints] });
+
+  // Save to projected_trails.json format and download
+  const blob = new Blob([JSON.stringify(trailDrawPoints)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = name.replace(/\s+/g, '_') + '.json';
+  a.click();
+
+  // Add to map permanently
+  L.polyline(trailDrawPoints, {
+    color: '#00bfff', weight: 4, opacity: 0.85, dashArray: '10, 6'
+  }).bindTooltip(name, { sticky: true, direction: 'top' }).addTo(drawnTrailsLayer);
+  drawnTrailsLayer.addTo(map);
+
+  cleanupTrailDraw();
+}
+
+function cancelTrailDraw(e) {
+  e?.stopPropagation();
+  cleanupTrailDraw();
+}
+
+function cleanupTrailDraw() {
+  trailDrawMode = false;
+  map.off('click', onTrailMapClick);
+  map.getContainer().style.cursor = '';
+  trailDrawMarkers.forEach(m => map.removeLayer(m));
+  if (trailDrawLine) map.removeLayer(trailDrawLine);
+  trailDrawPoints = [];
+  trailDrawMarkers = [];
+  trailDrawLine = null;
+  const bar = document.getElementById('trailDrawBar');
+  if (bar) bar.style.display = 'none';
+}
+
+// ===== Draw Points Mode (Light/Snow) =====
+let pointDrawMode = false;
+let pointDrawType = '';
+let pointDrawEmoji = '';
+let pointDrawLabel = '';
+let pointDrawMarkers = [];
+let pointDrawPoints = [];
+
+function startDrawPoints(type, emoji, label) {
+  pointDrawMode = true;
+  pointDrawType = type;
+  pointDrawEmoji = emoji;
+  pointDrawLabel = label;
+  pointDrawMarkers = [];
+  pointDrawPoints = [];
+  map.getContainer().style.cursor = 'crosshair';
+
+  let bar = document.getElementById('pointDrawBar');
+  if (!bar) {
+    bar = document.createElement('div');
+    bar.id = 'pointDrawBar';
+    bar.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:10000;background:#fff;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,0.3);padding:12px 16px;display:flex;gap:10px;align-items:center';
+    document.body.appendChild(bar);
+  }
+  bar.style.display = 'flex';
+  bar.innerHTML = `
+    <span style="font-weight:700;font-size:13px">${emoji} ${label} — кликайте для расстановки</span>
+    <span id="pointCount" style="background:#eee;padding:2px 8px;border-radius:10px;font-size:12px">0 точек</span>
+    <button onclick="undoDrawPoint(event)" style="padding:6px 12px;background:#e74c3c;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px">↩ Отменить</button>
+    <button onclick="finishDrawPoints(event)" style="padding:6px 12px;background:#27ae60;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px">💾 Сохранить JSON</button>
+    <button onclick="cancelDrawPoints(event)" style="padding:6px 12px;background:#888;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px">✕ Отмена</button>
+  `;
+
+  map.on('click', onPointMapClick);
+}
+
+function onPointMapClick(e) {
+  if (!pointDrawMode) return;
+  const pt = { lat: e.latlng.lat, lng: e.latlng.lng };
+  pointDrawPoints.push(pt);
+
+  const icon = L.divIcon({
+    className: '',
+    html: `<div style="font-size:18px;cursor:move">${pointDrawEmoji}</div>`,
+    iconSize: [22, 22], iconAnchor: [11, 11]
+  });
+  const marker = L.marker([pt.lat, pt.lng], { icon, draggable: true }).addTo(map);
+  const idx = pointDrawPoints.length - 1;
+  marker.on('drag', function() {
+    const pos = this.getLatLng();
+    pointDrawPoints[idx] = { lat: pos.lat, lng: pos.lng };
+  });
+  pointDrawMarkers.push(marker);
+  document.getElementById('pointCount').textContent = `${pointDrawPoints.length} точек`;
+}
+
+function undoDrawPoint(e) {
+  e?.stopPropagation();
+  if (pointDrawMarkers.length === 0) return;
+  const m = pointDrawMarkers.pop();
+  map.removeLayer(m);
+  pointDrawPoints.pop();
+  document.getElementById('pointCount').textContent = `${pointDrawPoints.length} точек`;
+}
+
+function finishDrawPoints(e) {
+  e?.stopPropagation();
+  if (pointDrawPoints.length === 0) { alert('Нет точек!'); return; }
+
+  // Update coordinates from dragged markers
+  pointDrawMarkers.forEach((m, i) => {
+    const pos = m.getLatLng();
+    pointDrawPoints[i] = { lat: round6(pos.lat), lng: round6(pos.lng) };
+  });
+
+  const data = {
+    type: pointDrawType,
+    label: pointDrawLabel,
+    emoji: pointDrawEmoji,
+    points: pointDrawPoints,
+    created: new Date().toISOString()
+  };
+
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${pointDrawType}_${Date.now()}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+
+  // Also try to save to server
+  fetch('/save_points', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  }).catch(() => {});
+
+  cleanupDrawPoints();
+}
+
+function cancelDrawPoints(e) {
+  e?.stopPropagation();
+  cleanupDrawPoints();
+}
+
+function cleanupDrawPoints() {
+  pointDrawMode = false;
+  map.off('click', onPointMapClick);
+  map.getContainer().style.cursor = '';
+  pointDrawMarkers.forEach(m => map.removeLayer(m));
+  pointDrawMarkers = [];
+  pointDrawPoints = [];
+  const bar = document.getElementById('pointDrawBar');
+  if (bar) bar.style.display = 'none';
+}
+
+function round6(n) { return Math.round(n * 1000000) / 1000000; }
+
+function toggleSkiPanel() {
+  const panel = document.getElementById('skiPanel');
+  const btn = document.getElementById('skiBtn');
+  document.getElementById('legendPanel').classList.remove('open');
+  document.getElementById('legendBtn').classList.remove('active');
+  document.getElementById('transportPanel').classList.remove('open');
+  document.getElementById('transportBtn').classList.remove('active');
+  panel.classList.toggle('open');
+  btn.classList.toggle('active');
+}
+
+let osmSkiData = null;
+
+async function loadOsmSki() {
+  if (!osmSkiData) {
+    const resp = await fetch('osm_ski.json');
+    osmSkiData = await resp.json();
+  }
+  return osmSkiData;
+}
+
+async function toggleSkiTrail(id) {
+  const trail = skiTrails.find(t => t.id === id);
+  if (!trail) return;
+  const el = document.querySelector(`.ski-trail-item[data-ski="${id}"]`);
+
+  if (skiLayers[id]) {
+    map.removeLayer(skiLayers[id]);
+    delete skiLayers[id];
+    el?.classList.remove('active');
+    return;
+  }
+
+  el?.classList.add('active');
+  const data = await loadOsmSki();
+  const segments = data[id] || [];
+
+  const layer = L.featureGroup();
+  segments.forEach(coords => {
+    L.polyline(coords, {
+      color: trail.color, weight: 4, opacity: 0.85
+    }).bindTooltip(trail.name, { sticky: true, direction: 'top' }).addTo(layer);
+  });
+
+  layer.addTo(map);
+  skiLayers[id] = layer;
+}
+
+async function toggleAllSkiTrails() {
+  const btn = document.getElementById('skiShowAll');
+  const anyVisible = Object.keys(skiLayers).length > 0;
+
+  if (anyVisible) {
+    // Hide all
+    Object.keys(skiLayers).forEach(id => {
+      map.removeLayer(skiLayers[id]);
+      delete skiLayers[id];
+      document.querySelector(`.ski-trail-item[data-ski="${id}"]`)?.classList.remove('active');
+    });
+    btn.textContent = 'Показать все трассы';
+    btn.classList.remove('active');
+  } else {
+    btn.textContent = 'Загрузка...';
+    for (const t of skiTrails) {
+      if (!skiLayers[t.id]) {
+        await toggleSkiTrail(t.id);
+        await new Promise(r => setTimeout(r, 800));
+      }
+    }
+    btn.textContent = 'Скрыть все трассы';
+    btn.classList.add('active');
+  }
+}
+
+buildSkiPanel();
+
+// ===== Draw Boundary Mode =====
+let drawMode = false;
+let drawPoints = [];
+let drawMarkers = [];
+let drawPolyline = null;
+let drawPolygon = null;
+
+const drawIcon = (num) => L.divIcon({
+  className: 'draw-point',
+  html: `<div style="width:16px;height:16px;border-radius:50%;background:#3498db;border:2px solid #1a5276;color:#fff;font-size:9px;display:flex;align-items:center;justify-content:center;font-weight:bold">${num}</div>`,
+  iconSize: [16, 16],
+  iconAnchor: [8, 8]
+});
+
+function toggleDrawMode() {
+  drawMode = !drawMode;
+  $('drawToggle').style.background = drawMode ? '#c0392b' : '#1a5276';
+  $('drawToggle').innerHTML = drawMode ? '&#9724; Стоп рисование' : '&#9998; Рисовать границу';
+  $('drawBar').style.display = drawMode ? 'flex' : 'none';
+  document.getElementById('map').style.cursor = drawMode ? 'crosshair' : '';
+}
+
+function redrawLines() {
+  if (drawPolyline) map.removeLayer(drawPolyline);
+  if (drawPolygon) map.removeLayer(drawPolygon);
+  drawPolyline = null;
+  drawPolygon = null;
+  if (drawPoints.length > 1) {
+    drawPolyline = L.polyline(drawPoints, { color: '#e74c3c', weight: 3, dashArray: '6,4' }).addTo(map);
+  }
+  // Счётчик точек
+  const cnt = document.getElementById('drawCount');
+  if (cnt) cnt.textContent = '(' + drawPoints.length + ' точек)';
+}
+
+function onMapClickDraw(e) {
+  if (!drawMode) return;
+  const ll = [e.latlng.lat, e.latlng.lng];
+  drawPoints.push(ll);
+  const idx = drawPoints.length - 1;
+
+  const marker = L.marker(ll, { icon: drawIcon(idx + 1), draggable: true, zIndexOffset: 2000 }).addTo(map);
+  marker.on('drag', function(ev) {
+    drawPoints[idx] = [ev.latlng.lat, ev.latlng.lng];
+    redrawLines();
+  });
+  drawMarkers.push(marker);
+  redrawLines();
+}
+
+function undoDrawPoint() {
+  if (!drawPoints.length) return;
+  drawPoints.pop();
+  const m = drawMarkers.pop();
+  if (m) map.removeLayer(m);
+  redrawLines();
+}
+
+function clearDraw() {
+  drawPoints = [];
+  drawMarkers.forEach(m => map.removeLayer(m));
+  drawMarkers = [];
+  if (drawPolyline) { map.removeLayer(drawPolyline); drawPolyline = null; }
+  if (drawPolygon) { map.removeLayer(drawPolygon); drawPolygon = null; }
+}
+
+function finishDraw() {
+  if (drawPoints.length < 3) { alert('Нужно минимум 3 точки'); return; }
+
+  // Замыкаем — показываем полигон
+  if (drawPolyline) map.removeLayer(drawPolyline);
+  drawPolygon = L.polygon(drawPoints, { color: '#2d5a27', weight: 2, fillColor: '#4a8c3f', fillOpacity: 0.1, dashArray: '8,4' }).addTo(map);
+
+  const coordStr = drawPoints.map(p => `[${p[0].toFixed(6)},${p[1].toFixed(6)}]`).join(',\n    ');
+  const full = `[\n    ${coordStr},\n    [${drawPoints[0][0].toFixed(6)},${drawPoints[0][1].toFixed(6)}]\n  ]`;
+
+  navigator.clipboard.writeText(full).then(() => {
+    alert('✅ ' + drawPoints.length + ' точек скопировано в буфер обмена!\n\nТакже скачается boundary.json');
+  }).catch(() => {
+    alert('Готово! ' + drawPoints.length + ' точек. Скачается boundary.json');
+  });
+
+  const blob = new Blob([full], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'boundary.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+
+  drawMode = false;
+  $('drawToggle').style.background = '#1a5276';
+  $('drawToggle').innerHTML = '&#9998; Рисовать границу';
+  $('drawBar').style.display = 'none';
+}
+
+async function exportJSON() {
+  const json = JSON.stringify(entryPoints, null, 2);
+  const btn = document.querySelector('.export-bar button:first-child');
+  // Пробуем сохранить на локальный сервер
+  try {
+    const res = await fetch('/save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: json
+    });
+    if (res.ok) {
+      btn.textContent = '✅ Сохранено!';
+      setTimeout(() => btn.textContent = '💾 Сохранить JSON', 2000);
+      return;
+    }
+  } catch (e) { /* fallback ниже */ }
+  // Fallback: скачиваем файл
+  const blob = new Blob([json], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'entry_points.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  btn.textContent = '📥 Скачан!';
+  setTimeout(() => btn.textContent = '💾 Сохранить JSON', 2000);
+}
+
+init();
+</script>
+
+
+</body>
+</html>

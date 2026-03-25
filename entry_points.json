@@ -1,0 +1,413 @@
+[
+  {
+    "id": 1,
+    "name": "Входная группа №1",
+    "description": "Северный вход, район Зюзино",
+    "lat": 55.647298,
+    "lng": 37.569616,
+    "parking": "P145",
+    "infrastructure": [
+      "Устраиваемое кафе",
+      "Санузел"
+    ],
+    "photo360": "360photos/vg1_main.jpg",
+    "renders": [],
+    "viewpoints": [
+      {
+        "name": "Доп. ракурс 1",
+        "lat": 55.647246,
+        "lng": 37.569212,
+        "photo360": "360photos/vg1_dop1.jpg"
+      },
+      {
+        "name": "Доп. ракурс 2",
+        "lat": 55.647646,
+        "lng": 37.568612,
+        "photo360": "360photos/vg1_dop2.jpg"
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "name": "Входная группа №2",
+    "description": "Чертаново Северное, основной вход",
+    "lat": 55.63398,
+    "lng": 37.581396,
+    "parking": "P50, P80",
+    "infrastructure": [
+      "Устраиваемое кафе",
+      "Устраиваемый гараж",
+      "Действующее кафе",
+      "Действующий АБК с прокатом",
+      "Действующий гараж",
+      "Санузел"
+    ],
+    "photo360": "360photos/vg2_panorama.jpg",
+    "renders": [],
+    "viewpoints": [
+      {
+        "name": "Манеж",
+        "photo360": "360photos/vg2_manezh.jpg",
+        "lat": 55.634464,
+        "lng": 37.584057
+      },
+      {
+        "name": "Доп. ракурс",
+        "photo360": "360photos/vg2_dop.jpg",
+        "lat": 55.633592,
+        "lng": 37.585688
+      }
+    ]
+  },
+  {
+    "id": 3,
+    "name": "Входная группа №3",
+    "description": "Чертаново Центральное",
+    "lat": 55.621272,
+    "lng": 37.579701,
+    "parking": "P166",
+    "infrastructure": [
+      "Устраиваемое кафе",
+      "Санузел"
+    ],
+    "photo360": "360photos/vg3_main.jpg",
+    "renders": [],
+    "viewpoints": [
+      {
+        "name": "Доп. ракурс",
+        "photo360": "360photos/vg3_dop.jpg",
+        "lat": 55.621793,
+        "lng": 37.578135
+      },
+      {
+        "name": "Каток рядом",
+        "photo360": "360photos/vg3_katok.jpg",
+        "lat": 55.619733,
+        "lng": 37.580709
+      }
+    ]
+  },
+  {
+    "id": 4,
+    "name": "Входная группа №4",
+    "description": "Южнее Чертаново Центрального",
+    "lat": 55.613505,
+    "lng": 37.576804,
+    "parking": "P185",
+    "infrastructure": [
+      "Действующее кафе",
+      "Действующий АБК с прокатом (лыжная база)",
+      "Устраиваемый АБК с прокатом, гаражом и кафе при катке",
+      "Санузел"
+    ],
+    "photo360": "360photos/vg4_main.jpg",
+    "renders": [],
+    "viewpoints": [
+      {
+        "name": "Доп. ракурс",
+        "photo360": "360photos/vg4_dop.jpg",
+        "lat": 55.613311,
+        "lng": 37.575409
+      },
+      {
+        "name": "Со стороны парка",
+        "photo360": "360photos/vg4_park.jpg",
+        "lat": 55.614135,
+        "lng": 37.576933
+      }
+    ]
+  },
+  {
+    "id": 5,
+    "name": "Входная группа №5",
+    "description": "У МКАД, юго-восток",
+    "lat": 55.595597,
+    "lng": 37.578873,
+    "parking": "P83",
+    "infrastructure": [],
+    "photo360": "360photos/vg5_old.jpg",
+    "renders": [],
+    "viewpoints": [
+      {
+        "name": "Доп. ракурс 1",
+        "lat": 55.595897,
+        "lng": 37.579173000000004,
+        "photo360": "360photos/vg5new_main.jpg"
+      },
+      {
+        "name": "Доп. ракурс 2",
+        "lat": 55.595541,
+        "lng": 37.581804,
+        "photo360": "360photos/vg5new_dop2.jpg"
+      }
+    ]
+  },
+  {
+    "id": 6,
+    "name": "Входная группа №6",
+    "description": "Чертаново Южное, у ст.м. Лесопарковая",
+    "lat": 55.586653,
+    "lng": 37.595278,
+    "parking": "P30",
+    "infrastructure": [],
+    "photo360": "360photos/vg6_main.jpg",
+    "renders": [],
+    "viewpoints": [
+      {
+        "name": "Доп. ракурс",
+        "lat": 55.586161,
+        "lng": 37.595644,
+        "photo360": "360photos/vg6_dop1.jpg"
+      },
+      {
+        "name": "Доп. ракурс 2",
+        "lat": 55.587095,
+        "lng": 37.594968,
+        "photo360": "360photos/vg6_dop2.jpg"
+      },
+      {
+        "name": "Доп. ракурс 3",
+        "lat": 55.586962,
+        "lng": 37.594904,
+        "photo360": "360photos/vg6_dop3.jpg"
+      }
+    ]
+  },
+  {
+    "id": 7,
+    "name": "Входная группа №7",
+    "description": "Новый вход вместо ЛБК",
+    "lat": 55.583548,
+    "lng": 37.577963,
+    "parking": "",
+    "infrastructure": [
+      "Устраиваемый гараж",
+      "Устраиваемое кафе",
+      "Устраиваемый АБК с прокатом",
+      "Санузел"
+    ],
+    "photo360": "360photos/vg5new_dop1.jpg",
+    "renders": [],
+    "viewpoints": []
+  },
+  {
+    "id": 8,
+    "name": "Входная группа №8",
+    "description": "Бутово Северное, южный вход",
+    "lat": 55.569912,
+    "lng": 37.560303,
+    "parking": "",
+    "infrastructure": [
+      "Устраиваемое кафе",
+      "Устраиваемый гараж",
+      "Существующий АБК с прокатом",
+      "Санузел"
+    ],
+    "photo360": "360photos/vg7_main.jpg",
+    "renders": [],
+    "viewpoints": [
+      {
+        "name": "Доп. ракурс",
+        "lat": 55.570212,
+        "lng": 37.560603,
+        "photo360": "360photos/vg7_dop1.jpg"
+      },
+      {
+        "name": "Доп. ракурс 2",
+        "lat": 55.569612,
+        "lng": 37.560003,
+        "photo360": "360photos/vg7_dop2.jpg"
+      }
+    ]
+  },
+  {
+    "id": 9,
+    "name": "Входная группа №9",
+    "description": "Рядом с участком СВР",
+    "lat": 55.55956,
+    "lng": 37.512522,
+    "parking": "",
+    "infrastructure": [
+      "Устраиваемое кафе",
+      "Устраиваемый гараж",
+      "Устраиваемый АБК с прокатом",
+      "Санузел"
+    ],
+    "photo360": "360photos/vg9_main.jpg",
+    "renders": [],
+    "viewpoints": [
+      {
+        "name": "Доп. ракурс",
+        "lat": 55.55986,
+        "lng": 37.512822,
+        "photo360": "360photos/vg9_dop1.jpg"
+      },
+      {
+        "name": "Доп. ракурс 2",
+        "lat": 55.55936,
+        "lng": 37.512222,
+        "photo360": "360photos/vg9_dop2.jpg"
+      }
+    ]
+  },
+  {
+    "id": 10,
+    "name": "Входная группа №10",
+    "description": "У МКАД, рядом с ООО Веркрос",
+    "lat": 55.58595,
+    "lng": 37.545534,
+    "parking": "P620",
+    "infrastructure": [
+      "Устраиваемый гараж"
+    ],
+    "photo360": "360photos/vg10_main.jpg",
+    "renders": [],
+    "viewpoints": [
+      {
+        "name": "Доп. ракурс 1",
+        "lat": 55.58575,
+        "lng": 37.545834,
+        "photo360": "360photos/vg10_dop1.jpg"
+      },
+      {
+        "name": "Доп. ракурс 2",
+        "lat": 55.583615,
+        "lng": 37.544703,
+        "photo360": "360photos/vg10_dop2.jpg"
+      }
+    ]
+  },
+  {
+    "id": 11,
+    "name": "Входная группа №11",
+    "description": "У МКАД, восточная сторона",
+    "lat": 55.5884,
+    "lng": 37.5485,
+    "parking": "P183",
+    "infrastructure": [],
+    "photo360": "360photos/vg11_main.jpg",
+    "renders": []
+  },
+  {
+    "id": 12,
+    "name": "Входная группа №12",
+    "description": "Ясенево, западный вход",
+    "lat": 55.597825,
+    "lng": 37.556958,
+    "parking": "P430",
+    "infrastructure": [],
+    "photo360": "360photos/vg12_main.jpg",
+    "renders": [],
+    "viewpoints": [
+      {
+        "name": "Доп. ракурс 1",
+        "lat": 55.597625,
+        "lng": 37.557258,
+        "photo360": "360photos/vg12_dop1.jpg"
+      },
+      {
+        "name": "Доп. ракурс 2",
+        "lat": 55.598025,
+        "lng": 37.556658,
+        "photo360": "360photos/vg12_dop2.jpg"
+      }
+    ]
+  },
+  {
+    "id": 13,
+    "name": "Входная группа №13",
+    "description": "Ясенево, центральный вход",
+    "lat": 55.611792,
+    "lng": 37.556281,
+    "parking": "P226",
+    "infrastructure": [],
+    "photo360": "360photos/vg13_main.jpg",
+    "renders": []
+  },
+  {
+    "id": 14,
+    "name": "Входная группа №14",
+    "description": "Ясенево, у Новоясеневского проспекта",
+    "lat": 55.626144,
+    "lng": 37.543053,
+    "parking": "",
+    "infrastructure": [
+      "Существующий АБК с прокатом",
+      "Санузел"
+    ],
+    "photo360": "360photos/vg15_main.jpg",
+    "renders": [],
+    "viewpoints": [
+      {
+        "name": "Доп. ракурс",
+        "lat": 55.626085,
+        "lng": 37.542429,
+        "photo360": "360photos/vg15_dop1.jpg"
+      }
+    ]
+  },
+  {
+    "id": 15,
+    "name": "Входная группа №15",
+    "description": "Коньково",
+    "lat": 55.637444,
+    "lng": 37.545111,
+    "parking": "",
+    "infrastructure": [
+      "АБК объединённый с прокатом, кафе и гаражом",
+      "Санузел"
+    ],
+    "photo360": "360photos/vg14_main.jpg",
+    "renders": [],
+    "viewpoints": [
+      {
+        "name": "Доп. ракурс 1",
+        "lat": 55.63725,
+        "lng": 37.545712,
+        "photo360": "360photos/vg14_dop1.jpg"
+      },
+      {
+        "name": "Доп. ракурс 2",
+        "lat": 55.637705,
+        "lng": 37.544756,
+        "photo360": "360photos/vg14_dop2.jpg"
+      }
+    ]
+  },
+  {
+    "id": "К",
+    "name": "⛸ Каток АНО «Москоллекторстройтрест»",
+    "description": "ул. Красного Маяка, 22к1 — ГП «Спорт Москвы», программа ДКР по строительству круглогодичных спортивных площадок, 2026",
+    "lat": 55.615225,
+    "lng": 37.580141,
+    "parking": "",
+    "infrastructure": [
+      "Каток"
+    ],
+    "photo360": "360photos/katok_main.jpg",
+    "renders": [],
+    "type": "infrastructure",
+    "viewpoints": [
+      {
+        "name": "Вход",
+        "photo360": "360photos/katok_vhod.jpg",
+        "lat": 55.615353,
+        "lng": 37.579293
+      }
+    ]
+  },
+  {
+    "id": "К2",
+    "name": "⛸ Каток АО «Мосводоканалстройтрест»",
+    "description": "У ВГ №14 — ГП «Спорт Москвы», программа ДКР по строительству круглогодичных спортивных площадок, 2026",
+    "lat": 55.637087,
+    "lng": 37.54553,
+    "parking": "",
+    "infrastructure": [
+      "Каток"
+    ],
+    "photo360": "360photos/vg14_katok.jpg",
+    "renders": [],
+    "type": "infrastructure"
+  }
+]
