@@ -2289,10 +2289,7 @@ function buildSkiPanel() {
     <span class="ski-trail-color" style="background:#00CC00"></span>
     <div><div class="ski-trail-name">Трассы по грунтовому покрытию</div><div class="ski-trail-info">71,8 км · ширина 2–4 м</div></div>
   </div>`;
-  html += `<div class="ski-trail-item" data-dxf="0_трасса щепа" onclick="toggleDxfLayer('0_трасса щепа', this)">
-    <span class="ski-trail-color" style="background:#8B8B00"></span>
-    <div><div class="ski-trail-name">Трассы из щепы</div></div>
-  </div>`;
+
   // Скрыто: нарисованные вручную трассы (для внутреннего использования)
   // html += `<div class="ski-trail-item" data-ski="projected" onclick="toggleProjectedTrails()">
   //   <span class="ski-trail-color" style="background:#00bfff;border:2px dashed #0088cc"></span>
@@ -2397,7 +2394,7 @@ const dxfColors = {
   '0_Щебень': '#FF0000',
   '0_Борт проект': '#0000FF',
   '0_Борт проект_голубой': '#00BFFF',
-  '0_трасса щепа': '#8B8B00',
+
 };
 
 async function loadDxfData() {
