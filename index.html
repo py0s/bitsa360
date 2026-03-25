@@ -2493,22 +2493,29 @@ async function toggleLighting() {
   }
   el?.classList.add('active');
   lightingLayer = L.featureGroup();
-  const lightIcon = L.divIcon({
-    className: '',
-    html: `<svg width="14" height="22" viewBox="0 0 14 22" xmlns="http://www.w3.org/2000/svg">
-      <rect x="6" y="8" width="2" height="14" fill="#555" rx="1"/>
-      <path d="M3 2 Q7 0 11 2 L10 8 H4 Z" fill="#FFD700" stroke="#E6B800" stroke-width="0.5"/>
-      <ellipse cx="7" cy="8" rx="5" ry="2.5" fill="rgba(255,230,0,0.4)" filter="blur(2px)"/>
-    </svg>`,
-    iconSize: [14, 22], iconAnchor: [7, 22]
-  });
+  function haversine(p1, p2) {
+    const R = 6371000;
+    const dLat = (p2.lat - p1.lat) * Math.PI / 180;
+    const dLon = (p2.lng - p1.lng) * Math.PI / 180;
+    const a = Math.sin(dLat/2)**2 + Math.cos(p1.lat*Math.PI/180)*Math.cos(p2.lat*Math.PI/180)*Math.sin(dLon/2)**2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  }
   try {
     const resp = await fetch('projected_light.json');
     const lightData = await resp.json();
-    lightData.points.forEach(pt => {
-      L.marker([pt.lat, pt.lng], { icon: lightIcon })
-        .bindTooltip('Проектируемое освещение', { direction: 'top' }).addTo(lightingLayer);
-    });
+    const pts = lightData.points || [];
+    if (pts.length > 0) {
+      let segment = [pts[0]];
+      for (let i = 1; i < pts.length; i++) {
+        if (haversine(pts[i-1], pts[i]) > 600) {
+          if (segment.length > 1) L.polyline(segment.map(p => [p.lat, p.lng]), { color: '#FF9900', weight: 3, opacity: 0.9 }).addTo(lightingLayer);
+          segment = [pts[i]];
+        } else {
+          segment.push(pts[i]);
+        }
+      }
+      if (segment.length > 1) L.polyline(segment.map(p => [p.lat, p.lng]), { color: '#FF9900', weight: 3, opacity: 0.9 }).addTo(lightingLayer);
+    }
   } catch(e) { console.error('Light load error:', e); }
   lightingLayer.addTo(map);
 }
@@ -2578,17 +2585,29 @@ async function toggleExistingLight() {
   }
   el?.classList.add('active');
   existingLightLayer = L.featureGroup();
-  const icon = L.divIcon({
-    className: '',
-    html: '<div style="width:8px;height:8px;border-radius:50%;background:#FFA500;box-shadow:0 0 5px 2px rgba(255,165,0,0.5)"></div>',
-    iconSize: [8, 8], iconAnchor: [4, 4]
-  });
+  function haversineEx(p1, p2) {
+    const R = 6371000;
+    const dLat = (p2.lat - p1.lat) * Math.PI / 180;
+    const dLon = (p2.lng - p1.lng) * Math.PI / 180;
+    const a = Math.sin(dLat/2)**2 + Math.cos(p1.lat*Math.PI/180)*Math.cos(p2.lat*Math.PI/180)*Math.sin(dLon/2)**2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  }
   try {
     const resp = await fetch('existing_light.json');
     const data = await resp.json();
-    (data.points || []).forEach(pt => {
-      L.marker([pt.lat, pt.lng], { icon: icon }).addTo(existingLightLayer);
-    });
+    const pts = data.points || [];
+    if (pts.length > 0) {
+      let segment = [pts[0]];
+      for (let i = 1; i < pts.length; i++) {
+        if (haversineEx(pts[i-1], pts[i]) > 600) {
+          if (segment.length > 1) L.polyline(segment.map(p => [p.lat, p.lng]), { color: '#FFD700', weight: 3, opacity: 0.9 }).addTo(existingLightLayer);
+          segment = [pts[i]];
+        } else {
+          segment.push(pts[i]);
+        }
+      }
+      if (segment.length > 1) L.polyline(segment.map(p => [p.lat, p.lng]), { color: '#FFD700', weight: 3, opacity: 0.9 }).addTo(existingLightLayer);
+    }
   } catch(e) { console.error(e); }
   existingLightLayer.addTo(map);
 }
