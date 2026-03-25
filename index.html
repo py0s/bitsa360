@@ -2649,6 +2649,11 @@ const zoneData = {
         { icon: '🚜', value: '1', label: 'Ратрак' },
         { icon: '🏔', value: '2', label: 'Снегохода' },
         { icon: '🏍', value: '2', label: 'Квадроцикла' },
+      ],
+      ecology: [
+        { icon: '🌲', value: '500', label: 'Вырубка крупномерных деревьев' },
+        { icon: '👥', value: 'Средняя', label: 'Обеспокоенность населения' },
+        { icon: '🌿', value: 'Работы не ведутся', label: 'Ареалы краснокнижных растений' },
       ]
     }
   },
@@ -2683,6 +2688,11 @@ const zoneData = {
         { icon: '🚜', value: '1', label: 'Ратрак' },
         { icon: '🏔', value: '2', label: 'Снегохода' },
         { icon: '🏍', value: '2', label: 'Квадроцикла' },
+      ],
+      ecology: [
+        { icon: '🌲', value: '700', label: 'Вырубка крупномерных деревьев' },
+        { icon: '👥', value: 'Высокая', label: 'Обеспокоенность населения' },
+        { icon: '🌿', value: 'Работы не ведутся', label: 'Ареалы краснокнижных растений' },
       ]
     }
   },
@@ -2717,6 +2727,12 @@ const zoneData = {
         { icon: '🚜', value: '3', label: 'Ратрака' },
         { icon: '🏔', value: '6', label: 'Снегоходов' },
         { icon: '🏍', value: '6', label: 'Квадроциклов' },
+      ],
+      ecology: [
+        { icon: '🌲', value: '250', label: 'Вырубка крупномерных деревьев' },
+        { icon: '👥', value: 'Средняя', label: 'Обеспокоенность населения' },
+        { icon: '🌿', value: 'Работы не ведутся', label: 'Ареалы краснокнижных растений' },
+        { icon: '🪲', value: 'Зачистка и уничтожение', label: 'Ареалы инвазивных видов' },
       ]
     }
   }
@@ -2904,7 +2920,17 @@ function showZoneSidebar(num) {
   });
   html += '</div>';
 
-  // Machinery
+  // Ecology
+  if (s.ecology?.length) {
+    html += '<div style="padding:12px 20px;border-bottom:1px solid #eee">';
+    html += '<div style="font-size:10px;color:#999;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;font-weight:600">Экология</div>';
+    s.ecology.forEach(e => {
+      html += `<div style="margin:6px 0;font-size:13px;color:#333">${e.icon} <b style="color:#1a1a1a">${e.value}</b> ${e.label}</div>`;
+    });
+    html += '</div>';
+  }
+
+
   if (s.machinery?.length) {
     html += '<div style="padding:12px 20px;border-bottom:1px solid #eee">';
     html += '<div style="font-size:10px;color:#999;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;font-weight:600">Техника</div>';
