@@ -25,7 +25,11 @@
         "lng": 37.568612,
         "photo360": "360photos/vg1_dop2.jpg"
       }
-    ]
+    ],
+    "compare": {
+      "before": "before-after/vg1_do.jpg",
+      "after": "before-after/vg1_posle.png"
+    }
   },
   {
     "id": 2,
@@ -57,7 +61,11 @@
         "lat": 55.633592,
         "lng": 37.585688
       }
-    ]
+    ],
+    "compare": {
+      "before": "before-after/vg2_do.jpg",
+      "after": "before-after/vg2_posle.jpg"
+    }
   },
   {
     "id": 3,
@@ -372,7 +380,11 @@
         "lng": 37.544756,
         "photo360": "360photos/vg14_dop2.jpg"
       }
-    ]
+    ],
+    "compare": {
+      "before": "before-after/vg15_do.jpg",
+      "after": "before-after/vg15_posle.jpg"
+    }
   },
   {
     "id": "К",

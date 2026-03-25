@@ -635,6 +635,7 @@ setTimeout(() => {
 
   <div class="modal-tabs">
     <div class="modal-tab active" data-tab="view360" onclick="switchTab('view360', this)">360° Панорама</div>
+    <div class="modal-tab" id="compareTabBtn" data-tab="compare" onclick="switchTab('compare', this)" style="display:none">🔄 До / После</div>
   </div>
 
   <div class="modal-body">
@@ -1654,6 +1655,11 @@ function openModal(id) {
   if (!currentEntry) return;
 
   $('modalTitle').textContent = currentEntry.name;
+
+  // Show/hide До/После tab based on compare data
+  const compareTab = document.getElementById('compareTabBtn');
+  compareTab.style.display = currentEntry.compare ? 'block' : 'none';
+
   switchTab('view360', document.querySelector('[data-tab="view360"]'));
 
   if (pannellumViewer) { pannellumViewer.destroy(); pannellumViewer = null; }
@@ -1684,6 +1690,7 @@ function openModal(id) {
   $('modalInfo').classList.add('active');
 }
 
+
 function closeModal() {
   $('modal').classList.remove('open');
   if (pannellumViewer) { pannellumViewer.destroy(); pannellumViewer = null; }
@@ -1698,12 +1705,12 @@ function switchTab(tab, el) {
 }
 
 function setupCompare() {
-  const hasData = currentEntry.photo360 && currentEntry.renders?.length;
+  const hasData = !!currentEntry.compare;
   $('comparePlaceholder').style.display = hasData ? 'none' : 'flex';
   ['compareBefore', 'compareAfter', 'compareSlider'].forEach(id => $(id).style.display = hasData ? 'block' : 'none');
   if (hasData) {
-    $('compareBeforeImg').src = currentEntry.photo360;
-    $('compareAfterImg').src = currentEntry.renders[0];
+    $('compareBeforeImg').src = currentEntry.compare.before;
+    $('compareAfterImg').src = currentEntry.compare.after;
     initSlider();
   }
 }
@@ -2262,36 +2269,25 @@ function buildSkiPanel() {
   const panel = document.getElementById('skiPanel');
   let html = '<div style="font-weight:700;font-size:14px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center">⛷ Лыжные трассы<span style="cursor:pointer;font-size:18px;color:#999" onclick="toggleSkiPanel()">✕</span></div>';
 
-  skiTrails.forEach(t => {
-    html += `<div class="ski-trail-item" data-ski="${t.id}" onclick="toggleSkiTrail('${t.id}')">
-      <span class="ski-trail-color" style="background:${t.color}"></span>
-      <div>
-        <div class="ski-trail-name">${t.name}</div>
-        ${t.info ? `<div class="ski-trail-info">${t.info}</div>` : ''}
-      </div>
-      <span class="ski-trail-segments">${t.segments}</span>
-    </div>`;
-  });
 
-  html += '<button class="ski-show-all" id="skiShowAll" onclick="toggleAllSkiTrails()">Показать все трассы</button>';
 
   // === ПРОЕКТИРУЕМЫЕ ПОКРЫТИЯ ===
-  html += '<div style="font-weight:700;font-size:13px;margin:16px 0 8px;padding-top:12px;border-top:2px solid #0088cc;color:#0088cc">📐 Проектируемые покрытия</div>';
+  html += '<div style="font-weight:700;font-size:13px;margin:16px 0 8px;padding-top:12px;border-top:2px solid #0088cc;color:#0088cc">📐 Проектируемые трассы</div>';
   html += `<div class="ski-trail-item" data-dxf="0_Борт проект_голубой" onclick="toggleDxfLayer('0_Борт проект_голубой', this)">
     <span class="ski-trail-color" style="background:#00BFFF"></span>
-    <div><div class="ski-trail-name">Новое АБ покрытие</div><div class="ski-trail-info">14,7 км</div></div>
+    <div><div class="ski-trail-name">Новое АБ покрытие</div><div class="ski-trail-info">14,7 км · ширина 4 м</div></div>
   </div>`;
   html += `<div class="ski-trail-item" data-dxf="0_Борт проект" onclick="toggleDxfLayer('0_Борт проект', this)">
     <span class="ski-trail-color" style="background:#0000FF"></span>
-    <div><div class="ski-trail-name">Ремонтируемое АБ покрытие</div><div class="ski-trail-info">11,5 км</div></div>
+    <div><div class="ski-trail-name">Ремонтируемое АБ покрытие</div><div class="ski-trail-info">11,5 км · ширина 4 м</div></div>
   </div>`;
   html += `<div class="ski-trail-item" data-dxf="0_Щебень" onclick="toggleDxfLayer('0_Щебень', this)">
     <span class="ski-trail-color" style="background:#FF0000"></span>
-    <div><div class="ski-trail-name">Покрытие из гранитного отсева</div><div class="ski-trail-info">22,1 км</div></div>
+    <div><div class="ski-trail-name">Покрытие из гранитного отсева</div><div class="ski-trail-info">22,1 км · ширина 4 м</div></div>
   </div>`;
   html += `<div class="ski-trail-item" data-dxf="0_грунт трасса" onclick="toggleDxfLayer('0_грунт трасса', this)">
     <span class="ski-trail-color" style="background:#00CC00"></span>
-    <div><div class="ski-trail-name">Трассы по грунтовому покрытию</div><div class="ski-trail-info">71,8 км</div></div>
+    <div><div class="ski-trail-name">Трассы по грунтовому покрытию</div><div class="ski-trail-info">71,8 км · ширина 2–4 м</div></div>
   </div>`;
   html += `<div class="ski-trail-item" data-dxf="0_трасса щепа" onclick="toggleDxfLayer('0_трасса щепа', this)">
     <span class="ski-trail-color" style="background:#8B8B00"></span>
@@ -2354,8 +2350,23 @@ function buildSkiPanel() {
     <button class="ski-show-all" style="background:#e67e22;margin-top:4px;padding:6px 10px;font-size:11px" onclick="resetOverlayBounds()">🔓 Разблокировать углы</button>
   </div>`;
 
+  // === ЛЫЖНЫЕ ТРАССЫ ===
+  html += '<div style="font-weight:700;font-size:13px;margin:16px 0 8px;padding-top:12px;border-top:2px solid #c0392b;color:#c0392b">⛷ Лыжные трассы</div>';
+  skiTrails.forEach(t => {
+    html += `<div class="ski-trail-item" data-ski="${t.id}" onclick="toggleSkiTrail('${t.id}')">
+      <span class="ski-trail-color" style="background:${t.color}"></span>
+      <div>
+        <div class="ski-trail-name">${t.name}</div>
+        ${t.info ? `<div class="ski-trail-info">${t.info}</div>` : ''}
+      </div>
+      <span class="ski-trail-segments">${t.segments}</span>
+    </div>`;
+  });
+  html += '<button class="ski-show-all" id="skiShowAll" onclick="toggleAllSkiTrails()">Показать все трассы</button>';
+
   panel.innerHTML = html;
 }
+
 
 // ===== Projected Trails & Lighting =====
 let projectedTrailsData = null;
@@ -2487,8 +2498,12 @@ async function toggleLighting() {
   lightingLayer = L.featureGroup();
   const lightIcon = L.divIcon({
     className: '',
-    html: '<div style="width:8px;height:8px;border-radius:50%;background:#FFD700;box-shadow:0 0 6px 3px rgba(255,215,0,0.6)"></div>',
-    iconSize: [8, 8], iconAnchor: [4, 4]
+    html: `<svg width="14" height="22" viewBox="0 0 14 22" xmlns="http://www.w3.org/2000/svg">
+      <rect x="6" y="8" width="2" height="14" fill="#555" rx="1"/>
+      <path d="M3 2 Q7 0 11 2 L10 8 H4 Z" fill="#FFD700" stroke="#E6B800" stroke-width="0.5"/>
+      <ellipse cx="7" cy="8" rx="5" ry="2.5" fill="rgba(255,230,0,0.4)" filter="blur(2px)"/>
+    </svg>`,
+    iconSize: [14, 22], iconAnchor: [7, 22]
   });
   try {
     const resp = await fetch('projected_light.json');
@@ -2500,6 +2515,8 @@ async function toggleLighting() {
   } catch(e) { console.error('Light load error:', e); }
   lightingLayer.addTo(map);
 }
+
+
 
 let snowflakeLayer = null;
 async function toggleSnowflakes() {
