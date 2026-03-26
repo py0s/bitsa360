@@ -93,7 +93,11 @@
         "lat": 55.619733,
         "lng": 37.580709
       }
-    ]
+    ],
+    "compare": {
+      "before": "before-after/vg3_do.jpg",
+      "after": "before-after/vg3_posle.jpg"
+    }
   },
   {
     "id": 4,
@@ -196,7 +200,11 @@
     ],
     "photo360": "360photos/vg5new_dop1.jpg",
     "renders": [],
-    "viewpoints": []
+    "viewpoints": [],
+    "compare": {
+      "before": "before-after/vg7_do.jpg",
+      "after": "before-after/vg7_posle.jpg"
+    }
   },
   {
     "id": 8,
@@ -226,7 +234,11 @@
         "lng": 37.560003,
         "photo360": "360photos/vg7_dop2.jpg"
       }
-    ]
+    ],
+    "compare": {
+      "before": "before-after/vg8_do.jpg",
+      "after": "before-after/vg8_posle.jpg"
+    }
   },
   {
     "id": 9,
@@ -256,7 +268,11 @@
         "lng": 37.508483,
         "photo360": "360photos/vg9_dop2.jpg"
       }
-    ]
+    ],
+    "compare": {
+      "before": "before-after/vg9_do.jpg",
+      "after": "before-after/vg9_posle.jpg"
+    }
   },
   {
     "id": 10,
@@ -283,7 +299,11 @@
         "lng": 37.544703,
         "photo360": "360photos/vg10_dop2.jpg"
       }
-    ]
+    ],
+    "compare": {
+      "before": "before-after/vg10_do.jpg",
+      "after": "before-after/vg10_posle.jpg"
+    }
   },
   {
     "id": 11,
