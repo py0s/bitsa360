@@ -422,7 +422,7 @@ body {
 .ski-show-all:hover { background: #a93226; }
 .ski-show-all.active { background: #27ae60; }
 
-.right-panel-btns { position: absolute; top: 130px; right: 10px; z-index: 800; display: flex; flex-direction: column; gap: 4px; }
+.right-panel-btns { position: absolute; top: 130px; right: 10px; z-index: 1001; display: flex; flex-direction: column; gap: 4px; }
 .right-panel-btn {
   background: #34495e; color: #fff; border: none; padding: 8px 14px;
   border-radius: 8px; font-size: 12px; cursor: pointer; font-weight: 600;
@@ -555,7 +555,7 @@ setTimeout(() => {
     <div class="sidebar-filters" id="sidebarFilters">
       <div class="filter-chip active" data-filter="all" onclick="filterEntries('all', this)">Все</div>
       <div class="filter-chip" data-filter="Кафе" onclick="filterEntries('Кафе', this)">Кафе</div>
-      <div class="filter-chip" data-filter="Прокат" onclick="filterEntries('Прокат', this)">Прокат</div>
+      <div class="filter-chip" data-filter="АБК" onclick="filterEntries('АБК', this)">АБК</div>
       <div class="filter-chip" data-filter="Гараж" onclick="filterEntries('Гараж', this)">Гараж</div>
     </div>
 
@@ -2837,9 +2837,7 @@ function switchSidebarTab(tabId) {
   if (tabId === 'entries') {
     // Show original entry list
     filters.style.display = 'flex';
-    if (originalSidebarHtml) {
-      entryList.innerHTML = originalSidebarHtml;
-    }
+    render();
   } else {
     // Show zone info
     filters.style.display = 'none';
